@@ -144,6 +144,26 @@ extension/
 
 每个站点只需标记一次，配置按 `location.origin` 持久化在 `chrome.storage.local`。
 
+**失败样本收集（数据闭环）**：识别置信度不足（<0.9）或提交后服务器提示"验证码不正确"时，扩展自动保存该验证码图片、预测、置信度与失败原因（本地 IndexedDB，上限 2000 条，内容自动去重）。点击扩展工具栏图标 → 导出 ZIP：含 `*.jpg` + `capture_manifest.csv`（与 `capture_real.py` 同格式，追加第 5 列 `reason`，现有工具不受影响）+ `failed_meta.json`（完整元数据）。
+
+导入修正闭环：
+
+```bash
+# 1. 解压 ZIP 到 data/fail_batch，人工核对（低置信度优先）
+.venv/Scripts/python -m verification_code.verify_captcha --dir data/fail_batch --max-conf 0.9
+
+# 2. 整理并入人工集（输出 data/real_human）
+.venv/Scripts/python -m verification_code.organize_real --human-dirs data/fail_batch
+
+# 3. 微调（真实 + 合成混合防遗忘）
+.venv/Scripts/python -m verification_code.finetune_real \
+    --base checkpoints/best.pt --real data/real_all \
+    --syn-train data/train31 --syn-val data/val31 \
+    --out checkpoints/finetuned --epochs 60
+```
+
+失败判定说明：提交失败仅当页面**动态出现**"验证码不正确"类提示时才保存（MutationObserver 监听新增文本节点，页面固定文案不会误触发）；保存的是填充时缓存的图片快照，站点提交失败后刷新验证码也不影响。跨域图片无法读取像素时会跳过保存。
+
 浏览器端识别演示页：本地服务启动 `python browser/server.py` 后访问 `http://127.0.0.1:8000/browser/`（含 JS 与 Python 基准一致性对比）。
 
 ### 其他工具

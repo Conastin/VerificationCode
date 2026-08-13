@@ -17,6 +17,11 @@
   const CONF_THRESHOLD = 0.9;
   const BADGE_HIDE_MS = 4000;
   const EXT_BASE = chrome.runtime.getURL("");
+  // Fail-sample collection: server-side captcha-reject hints (dynamic only,
+  // see setupFailHintMonitor) and dedup window.
+  const FAIL_HINT_PATTERN =
+    /验证码.{0,8}(不正确|错误|已失效|已过期|无效|校验失败|请重新|有误)/;
+  const FAIL_HINT_DEDUP_MS = 3000;
 
   let badge = null;
   let badgeTimer = null;
@@ -25,6 +30,8 @@
   let busy = false;
   let lastFilled = "";
   let config = null; // { imgSelector, inputSelector } for this origin
+  let lastSnap = null; // { dataUrl, imgSrc, label, confs, conf } of the last fill
+  let failHintLastAt = 0;
 
   // ------------------------------------------------------------------ status
   function showStatus(text, kind) {
@@ -129,6 +136,104 @@
     return null;
   }
 
+  // ------------------------------------------------------------ fail samples
+  async function snapshotImage(img) {
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    if (!w || !h) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, w, h);
+    try {
+      return canvas.toDataURL("image/jpeg", 0.85);
+    } catch (err) {
+      // Cross-origin image tainted the canvas; nothing we can save.
+      console.warn("[captcha-autofill] snapshot skipped (tainted canvas):", err);
+      return null;
+    }
+  }
+
+  async function saveFailSample(reason, snap, extra = {}) {
+    if (!snap || !snap.dataUrl) return;
+    try {
+      const byteStr = atob(snap.dataUrl.split(",")[1]);
+      const bytes = new Uint8Array(byteStr.length);
+      for (let i = 0; i < byteStr.length; i++) bytes[i] = byteStr.charCodeAt(i);
+      const resp = await chrome.runtime.sendMessage({
+        type: "saveFailSample",
+        reason,
+        label: snap.label,
+        confs: snap.confs,
+        conf: snap.conf,
+        imgSrc: snap.imgSrc,
+        attempts: extra.attempts || 0,
+        bytes: bytes.buffer,
+      });
+      if (resp?.ok) {
+        showStatus(
+          resp.dup ? "失败样本已存在（跳过）" : "已保存失败样本，可导出修正",
+          "ok"
+        );
+      } else if (resp?.full) {
+        showStatus("失败样本已达上限，请打开扩展导出", "fail");
+      }
+    } catch (err) {
+      console.warn("[captcha-autofill] save fail sample failed:", err);
+    }
+  }
+
+  async function captureSubmitFailure() {
+    // Prefer the snapshot of the captcha that was actually submitted (the
+    // site usually refreshes the image after a rejected submit).
+    let snap = lastSnap;
+    if (!snap) {
+      // Manual submit: best-effort — recognize the current image on the fly.
+      const img = document.querySelector(config.imgSelector);
+      if (!img) return;
+      try {
+        const dataUrl = await snapshotImage(img);
+        if (!dataUrl) return;
+        const result = await CaptchaRecognizer.recognize(img);
+        snap = {
+          dataUrl,
+          imgSrc: img.src,
+          label: result.label,
+          confs: result.perSlot,
+          conf: result.conf,
+        };
+      } catch (err) {
+        console.warn("[captcha-autofill] manual failure capture failed:", err);
+        return;
+      }
+    }
+    await saveFailSample("submit_failed", snap);
+  }
+
+  function setupFailHintMonitor() {
+    // Only hints that *appear* after page load count as a rejected submit;
+    // static page text (e.g. the input label "图形验证码") must not trigger.
+    const monitor = new MutationObserver((mutations) => {
+      if (Date.now() - failHintLastAt < FAIL_HINT_DEDUP_MS) return;
+      const input = document.querySelector(config.inputSelector);
+      if (!(lastFilled || (input && input.value))) return; // nothing submitted
+      for (const m of mutations) {
+        for (const node of m.addedNodes) {
+          if (node.nodeType !== Node.TEXT_NODE) continue;
+          const text = node.nodeValue || "";
+          if (text.length > 500) continue;
+          if (FAIL_HINT_PATTERN.test(text)) {
+            failHintLastAt = Date.now();
+            captureSubmitFailure();
+            return;
+          }
+        }
+      }
+    });
+    monitor.observe(document.body, { childList: true, subtree: true });
+  }
+
   // ------------------------------------------------------------- auto-fill
   async function runAutoFill() {
     if (busy || !config) return;
@@ -158,8 +263,23 @@
       if (result.conf >= CONF_THRESHOLD) {
         setInputValue(input, result.label);
         lastFilled = result.label;
+        const dataUrl = await snapshotImage(img);
+        if (dataUrl) {
+          lastSnap = { dataUrl, imgSrc: img.src, label: result.label, confs: result.perSlot, conf: result.conf };
+        }
         showStatus(`已填充 ${result.label}（置信度 ${result.conf.toFixed(2)}）`, "ok");
         return;
+      }
+      // Low-confidence attempts are hard cases worth collecting for retraining.
+      const dataUrl = await snapshotImage(img);
+      if (dataUrl) {
+        await saveFailSample("low_conf", {
+          dataUrl,
+          imgSrc: img.src,
+          label: result.label,
+          confs: result.perSlot,
+          conf: result.conf,
+        }, { attempts: attemptCount });
       }
       if (attemptCount >= MAX_ATTEMPTS) {
         showStatus(`连续 ${MAX_ATTEMPTS} 次置信度不足，请手动输入`, "fail");
@@ -201,6 +321,7 @@
       const current = document.querySelector(config.imgSelector);
       if (current && current !== img) scheduleAutoFill();
     }).observe(document.body, { childList: true, subtree: true });
+    setupFailHintMonitor();
     scheduleAutoFill();
   }
 
