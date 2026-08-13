@@ -29,8 +29,19 @@ exportBtn.addEventListener("click", async () => {
   setStatus("正在导出…");
   try {
     const resp = await chrome.runtime.sendMessage({ type: "exportFails" });
-    if (resp.ok) setStatus(`已下载 ${resp.filename}（${resp.count} 个样本）`);
-    else if (resp.empty) setStatus("没有可导出的样本");
+    if (resp.ok) {
+      // Download from the popup document: SW blob URLs die with the worker.
+      const blob = new Blob([resp.data], { type: "application/zip" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = resp.filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setStatus(`已下载 ${resp.filename}（${resp.count} 个样本）`);
+    } else if (resp.empty) {
+      setStatus("没有可导出的样本");
+    }
   } catch (err) {
     setStatus("导出失败: " + err);
   }

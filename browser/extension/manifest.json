@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "验证码自动识别填充",
-  "version": "2.2.6",
+  "version": "2.2.7",
   "description": "右键图片标记为验证码，自动寻找验证码输入框并填充（浏览器本地识别，通用站点）；识别/提交失败自动收集样本可导出修正",
   "icons": {
     "16": "icons/icon16.png",

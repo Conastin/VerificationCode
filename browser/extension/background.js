@@ -308,9 +308,10 @@ async function exportFails() {
   });
 
   const zip = makeZip(entries);
-  const url = URL.createObjectURL(zip);
+  // Hand the ZIP bytes back to the popup: a blob URL created in the service
+  // worker dies when the worker is killed mid-download, so the popup (a real
+  // document) creates the object URL and drives the download instead.
+  const data = await zip.arrayBuffer();
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-  const filename = `captcha_failures_${stamp}.zip`;
-  await chrome.downloads.download({ url, filename, conflictAction: "uniquify" });
-  return { ok: true, count: all.length, filename };
+  return { ok: true, count: all.length, filename: `captcha_failures_${stamp}.zip`, data };
 }
