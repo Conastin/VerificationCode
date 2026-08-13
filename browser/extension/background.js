@@ -128,11 +128,19 @@ function hashBytes(bytes) {
 }
 
 async function storeFailSample(msg) {
+  // Guard against empty/corrupt payloads: an empty buffer hashes to a fixed
+  // value and would dedup every subsequent sample into "duplicate".
+  if (!msg.bytes || msg.bytes.byteLength === 0) {
+    console.error("[captcha-autofill] bg rejected empty sample bytes:", msg.label, msg.reason);
+    return { ok: false, error: "empty bytes" };
+  }
   const db = await openDB();
   const store = db.transaction(DB_STORE, "readwrite").objectStore(DB_STORE);
   const hash = hashBytes(msg.bytes);
+  const head = Array.from(new Uint8Array(msg.bytes).slice(0, 8));
   console.log("[captcha-autofill] bg saveFailSample:", msg.label,
-    "reason=", msg.reason, "hash=", hash, "bytes=", msg.bytes?.byteLength);
+    "reason=", msg.reason, "hash=", hash, "bytes=", msg.bytes.byteLength,
+    "head=", head.join(","));
   const existing = await new Promise((resolve, reject) => {
     const req = store.get(hash);
     req.onsuccess = () => resolve(req.result);

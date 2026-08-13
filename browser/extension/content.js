@@ -175,7 +175,7 @@
         conf: snap.conf,
         imgSrc: snap.imgSrc,
         attempts: extra.attempts || 0,
-        bytes: bytes.buffer,
+        bytes, // Uint8Array (not .buffer): more reliable across message passing
       });
       console.log("[captcha-autofill] saveFailSample response:", resp);
       if (resp?.ok) {

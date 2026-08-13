@@ -30,6 +30,8 @@ exportBtn.addEventListener("click", async () => {
   try {
     const resp = await chrome.runtime.sendMessage({ type: "exportFails" });
     if (resp.ok) {
+      console.log("[captcha-autofill] export resp:", resp.filename,
+        "count=", resp.count, "dataBytes=", resp.data?.byteLength);
       // Download from the popup document: SW blob URLs die with the worker.
       const blob = new Blob([resp.data], { type: "application/zip" });
       const url = URL.createObjectURL(blob);
