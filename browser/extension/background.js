@@ -12,6 +12,12 @@ const CONTENT_FILES = [
   "content.js",
 ];
 
+// Let content scripts persist the fail-sample snapshot across page reloads
+// (chrome.storage.session is restricted to trusted contexts by default).
+chrome.storage.session
+  .setAccessLevel({ accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" })
+  .catch((err) => console.warn("[captcha-autofill] setAccessLevel failed:", err));
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
