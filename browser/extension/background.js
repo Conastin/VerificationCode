@@ -131,12 +131,18 @@ async function storeFailSample(msg) {
   const db = await openDB();
   const store = db.transaction(DB_STORE, "readwrite").objectStore(DB_STORE);
   const hash = hashBytes(msg.bytes);
+  console.log("[captcha-autofill] bg saveFailSample:", msg.label,
+    "reason=", msg.reason, "hash=", hash, "bytes=", msg.bytes?.byteLength);
   const existing = await new Promise((resolve, reject) => {
     const req = store.get(hash);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
-  if (existing) return { ok: true, dup: true };
+  if (existing) {
+    console.log("[captcha-autofill] DUP against existing:",
+      { label: existing.label, ts: existing.ts, reason: existing.reason, hash });
+    return { ok: true, dup: true };
+  }
   const count = await new Promise((resolve, reject) => {
     const req = store.count();
     req.onsuccess = () => resolve(req.result);

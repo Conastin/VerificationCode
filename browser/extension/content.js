@@ -157,7 +157,8 @@
 
   async function saveFailSample(reason, snap, extra = {}) {
     console.log("[captcha-autofill] saveFailSample:", reason, snap?.label,
-      "conf=", snap?.conf?.toFixed(3), "attempts=", extra.attempts);
+      "conf=", snap?.conf?.toFixed(3), "attempts=", extra.attempts,
+      "dataUrlLen=", snap?.dataUrl?.length, "imgSrc=", snap?.imgSrc);
     if (!snap || !snap.dataUrl) {
       console.warn("[captcha-autofill] saveFailSample skipped: no snapshot data");
       return;
