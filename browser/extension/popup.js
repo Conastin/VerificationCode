@@ -30,8 +30,6 @@ exportBtn.addEventListener("click", async () => {
   try {
     const resp = await chrome.runtime.sendMessage({ type: "exportFails" });
     if (resp.ok) {
-      console.log("[captcha-autofill] export resp:", resp.filename,
-        "count=", resp.count, "b64Len=", resp.b64?.length);
       // Decode base64 and download from the popup document (SW blob URLs die
       // with the worker; response messages are JSON-serialized).
       const bin = atob(resp.b64);

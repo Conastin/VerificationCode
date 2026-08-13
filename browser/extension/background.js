@@ -74,15 +74,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Fail-snapshot relay: content scripts are barred from storage.session,
     // so reads/writes are proxied here (trusted context).
     storeFailSnap: async () => {
-      console.log("[captcha-autofill] bg storeFailSnap:", message.snap?.label,
-        "ts=", message.snap?.ts);
       await chrome.storage.session.set({ failSnap: message.snap });
       return { ok: true };
     },
     getFailSnap: async () => {
       const { failSnap } = await chrome.storage.session.get("failSnap");
-      console.log("[captcha-autofill] bg getFailSnap:",
-        failSnap ? `label=${failSnap.label} ts=${failSnap.ts} pageUrl=${failSnap.pageUrl}` : null);
       return { failSnap: failSnap || null };
     },
     clearFailSnap: async () => {
@@ -147,19 +143,12 @@ async function storeFailSample(msg) {
   const db = await openDB();
   const store = db.transaction(DB_STORE, "readwrite").objectStore(DB_STORE);
   const hash = hashBytes(bytes);
-  console.log("[captcha-autofill] bg saveFailSample:", msg.label,
-    "reason=", msg.reason, "hash=", hash, "bytes=", bytes.length,
-    "head=", Array.from(bytes.slice(0, 8)).join(","));
   const existing = await new Promise((resolve, reject) => {
     const req = store.get(hash);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
-  if (existing) {
-    console.log("[captcha-autofill] DUP against existing:",
-      { label: existing.label, ts: existing.ts, reason: existing.reason, hash });
-    return { ok: true, dup: true };
-  }
+  if (existing) return { ok: true, dup: true };
   const count = await new Promise((resolve, reject) => {
     const req = store.count();
     req.onsuccess = () => resolve(req.result);
@@ -184,8 +173,6 @@ async function storeFailSample(msg) {
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
-  console.log("[captcha-autofill] bg saved fail sample:", msg.label,
-    "reason=", msg.reason, "hash=", hash, "count=", count + 1);
   return { ok: true };
 }
 

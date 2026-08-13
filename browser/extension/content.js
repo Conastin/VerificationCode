@@ -156,13 +156,7 @@
   }
 
   async function saveFailSample(reason, snap, extra = {}) {
-    console.log("[captcha-autofill] saveFailSample:", reason, snap?.label,
-      "conf=", snap?.conf?.toFixed(3), "attempts=", extra.attempts,
-      "dataUrlLen=", snap?.dataUrl?.length, "imgSrc=", snap?.imgSrc);
-    if (!snap || !snap.dataUrl) {
-      console.warn("[captcha-autofill] saveFailSample skipped: no snapshot data");
-      return;
-    }
+    if (!snap || !snap.dataUrl) return;
     try {
       const byteStr = atob(snap.dataUrl.split(",")[1]);
       const bytes = new Uint8Array(byteStr.length);
@@ -184,7 +178,6 @@
         ts: Date.now(),
         b64: btoa(bin),
       });
-      console.log("[captcha-autofill] saveFailSample response:", resp);
       if (resp?.ok) {
         showStatus(
           resp.dup ? "失败样本已存在（跳过）" : "已保存失败样本，可导出修正",
@@ -233,32 +226,16 @@
     // is present.
     const SNAP_TTL_MS = 60000;
     try {
-      console.log("[captcha-autofill] page-load check on", location.href);
       const resp = await chrome.runtime.sendMessage({ type: "getFailSnap" });
       const failSnap = resp?.failSnap;
-      console.log(
-        "[captcha-autofill] failSnap from background:",
-        failSnap
-          ? `label=${failSnap.label} ageMs=${Date.now() - failSnap.ts} pageUrl=${failSnap.pageUrl}`
-          : null
-      );
       if (!failSnap || Date.now() - failSnap.ts > SNAP_TTL_MS) return;
       // Same host: a rejected submit may land on a different path (e.g.
       // check.action) than the login page the snapshot was taken on.
       const sameHost =
         failSnap.pageUrl && new URL(failSnap.pageUrl).host === location.host;
-      console.log("[captcha-autofill] sameHost:", sameHost);
       if (!sameHost) return;
       const bodyText = document.body.textContent || "";
-      const hintMatch = bodyText.match(FAIL_HINT_PATTERN);
-      console.log(
-        "[captcha-autofill] hint match:",
-        hintMatch ? JSON.stringify(hintMatch[0]) : null,
-        "| bodyText len:", bodyText.length,
-        "| sample:", bodyText.replace(/\s+/g, " ").slice(0, 300)
-      );
-      if (!hintMatch) return;
-      console.log("[captcha-autofill] page-load submit failure detected, saving");
+      if (!FAIL_HINT_PATTERN.test(bodyText)) return;
       await saveFailSample("submit_failed", failSnap);
       await chrome.runtime.sendMessage({ type: "clearFailSnap" }).catch(() => {});
     } catch (err) {
@@ -342,13 +319,10 @@
           lastSnap = snap;
           // Survive a whole-page reload after a rejected submit: relayed to
           // the background (see checkPageLoadSubmitFailure).
-          console.log("[captcha-autofill] storing failSnap:", snap.label,
-            "ts=", Date.now(), "pageUrl=", location.href);
           chrome.runtime.sendMessage({
             type: "storeFailSnap",
             snap: { ...snap, pageUrl: location.href, ts: Date.now() },
-          }).then(() => console.log("[captcha-autofill] failSnap stored"))
-            .catch((err) => console.warn("[captcha-autofill] storeFailSnap failed:", err));
+          }).catch((err) => console.warn("[captcha-autofill] storeFailSnap failed:", err));
         }
         showStatus(`已填充 ${result.label}（置信度 ${result.conf.toFixed(2)}）`, "ok");
         return;
