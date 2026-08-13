@@ -128,19 +128,28 @@ function hashBytes(bytes) {
 }
 
 async function storeFailSample(msg) {
-  // Guard against empty/corrupt payloads: an empty buffer hashes to a fixed
-  // value and would dedup every subsequent sample into "duplicate".
-  if (!msg.bytes || msg.bytes.byteLength === 0) {
+  // Binary travels as base64 (runtime messages are JSON-serialized; raw
+  // TypedArray/ArrayBuffer arrive as empty objects and hash to a constant,
+  // deduping every sample into "duplicate").
+  let bytes;
+  try {
+    const bin = atob(msg.b64 || "");
+    bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  } catch (err) {
+    console.error("[captcha-autofill] bg base64 decode failed:", msg.label, err);
+    return { ok: false, error: "bad base64" };
+  }
+  if (bytes.length === 0) {
     console.error("[captcha-autofill] bg rejected empty sample bytes:", msg.label, msg.reason);
     return { ok: false, error: "empty bytes" };
   }
   const db = await openDB();
   const store = db.transaction(DB_STORE, "readwrite").objectStore(DB_STORE);
-  const hash = hashBytes(msg.bytes);
-  const head = Array.from(new Uint8Array(msg.bytes).slice(0, 8));
+  const hash = hashBytes(bytes);
   console.log("[captcha-autofill] bg saveFailSample:", msg.label,
-    "reason=", msg.reason, "hash=", hash, "bytes=", msg.bytes.byteLength,
-    "head=", head.join(","));
+    "reason=", msg.reason, "hash=", hash, "bytes=", bytes.length,
+    "head=", Array.from(bytes.slice(0, 8)).join(","));
   const existing = await new Promise((resolve, reject) => {
     const req = store.get(hash);
     req.onsuccess = () => resolve(req.result);
@@ -161,7 +170,7 @@ async function storeFailSample(msg) {
     const req = store.put({
       hash,
       name: `fail_${String(msg.ts)}_${hash.slice(0, 6)}.jpg`,
-      blob: new Blob([msg.bytes], { type: "image/jpeg" }),
+      blob: new Blob([bytes], { type: "image/jpeg" }),
       label: msg.label,
       confs: msg.confs,
       conf: msg.conf,
@@ -316,10 +325,14 @@ async function exportFails() {
   });
 
   const zip = makeZip(entries);
-  // Hand the ZIP bytes back to the popup: a blob URL created in the service
-  // worker dies when the worker is killed mid-download, so the popup (a real
-  // document) creates the object URL and drives the download instead.
-  const data = await zip.arrayBuffer();
+  // Hand the ZIP back as base64: response messages are JSON-serialized too,
+  // so a raw ArrayBuffer would arrive as an empty object (corrupt download).
+  // The popup decodes and downloads it (SW blob URLs also die with the worker).
+  const data = new Uint8Array(await zip.arrayBuffer());
+  let bin = "";
+  for (let i = 0; i < data.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, data.subarray(i, i + 0x8000));
+  }
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-  return { ok: true, count: all.length, filename: `captcha_failures_${stamp}.zip`, data };
+  return { ok: true, count: all.length, filename: `captcha_failures_${stamp}.zip`, b64: btoa(bin) };
 }

@@ -167,6 +167,12 @@
       const byteStr = atob(snap.dataUrl.split(",")[1]);
       const bytes = new Uint8Array(byteStr.length);
       for (let i = 0; i < byteStr.length; i++) bytes[i] = byteStr.charCodeAt(i);
+      // runtime messages are JSON-serialized and cannot carry binary
+      // (TypedArray/ArrayBuffer arrive as empty objects) — send base64.
+      let bin = "";
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      }
       const resp = await chrome.runtime.sendMessage({
         type: "saveFailSample",
         reason,
@@ -175,7 +181,8 @@
         conf: snap.conf,
         imgSrc: snap.imgSrc,
         attempts: extra.attempts || 0,
-        bytes, // Uint8Array (not .buffer): more reliable across message passing
+        ts: Date.now(),
+        b64: btoa(bin),
       });
       console.log("[captcha-autofill] saveFailSample response:", resp);
       if (resp?.ok) {
