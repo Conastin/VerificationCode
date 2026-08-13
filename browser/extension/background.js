@@ -73,8 +73,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     clearFails,
     // Fail-snapshot relay: content scripts are barred from storage.session,
     // so reads/writes are proxied here (trusted context).
-    storeFailSnap: async (msg) => {
-      await chrome.storage.session.set({ failSnap: msg.snap });
+    storeFailSnap: async () => {
+      await chrome.storage.session.set({ failSnap: message.snap });
       return { ok: true };
     },
     getFailSnap: async () => {
