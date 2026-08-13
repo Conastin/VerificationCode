@@ -74,11 +74,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Fail-snapshot relay: content scripts are barred from storage.session,
     // so reads/writes are proxied here (trusted context).
     storeFailSnap: async () => {
+      console.log("[captcha-autofill] bg storeFailSnap:", message.snap?.label,
+        "ts=", message.snap?.ts);
       await chrome.storage.session.set({ failSnap: message.snap });
       return { ok: true };
     },
     getFailSnap: async () => {
       const { failSnap } = await chrome.storage.session.get("failSnap");
+      console.log("[captcha-autofill] bg getFailSnap:",
+        failSnap ? `label=${failSnap.label} ts=${failSnap.ts} pageUrl=${failSnap.pageUrl}` : null);
       return { failSnap: failSnap || null };
     },
     clearFailSnap: async () => {
@@ -157,6 +161,8 @@ async function storeFailSample(msg) {
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
+  console.log("[captcha-autofill] bg saved fail sample:", msg.label,
+    "reason=", msg.reason, "hash=", hash, "count=", count + 1);
   return { ok: true };
 }
 
