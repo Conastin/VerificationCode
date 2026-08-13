@@ -1,0 +1,9 @@
+# GPU (CUDA) PyTorch must be installed first from the PyTorch index:
+#   pip install --index-url https://download.pytorch.org/whl/cu130 torch torchvision
+# Then install the rest:
+#   pip install -r requirements.txt
+numpy>=2.0
+Pillow>=11.3
+onnx>=1.17
+onnxscript>=0.1.0
+pytest>=9.1

@@ -1,0 +1,49 @@
+{
+  "checkpoint": "checkpoints\\best.pt",
+  "test_samples": 1000,
+  "full_accuracy": 0.999,
+  "char_accuracy": 0.99975,
+  "slot_accuracy": [
+    1.0,
+    1.0,
+    1.0,
+    0.999
+  ],
+  "rejection": [
+    {
+      "threshold": 0.5,
+      "coverage": 1.0,
+      "accuracy": 0.999
+    },
+    {
+      "threshold": 0.6,
+      "coverage": 0.998,
+      "accuracy": 0.998997995991984
+    },
+    {
+      "threshold": 0.7,
+      "coverage": 0.996,
+      "accuracy": 0.998995983935743
+    },
+    {
+      "threshold": 0.8,
+      "coverage": 0.994,
+      "accuracy": 0.9989939637826962
+    },
+    {
+      "threshold": 0.9,
+      "coverage": 0.99,
+      "accuracy": 1.0
+    },
+    {
+      "threshold": 0.95,
+      "coverage": 0.988,
+      "accuracy": 1.0
+    },
+    {
+      "threshold": 0.99,
+      "coverage": 0.975,
+      "accuracy": 1.0
+    }
+  ]
+}
