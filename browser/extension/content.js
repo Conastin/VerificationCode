@@ -211,27 +211,69 @@
     await saveFailSample("submit_failed", snap);
   }
 
+  async function checkPageLoadSubmitFailure() {
+    // Rejected submits often reload the whole page: the reject hint is
+    // already in the DOM when this script runs (no mutation to observe) and
+    // the in-memory snapshot is gone. The snapshot we cached at fill time
+    // survives in chrome.storage.session — use it if a fresh hint is present.
+    const SNAP_TTL_MS = 60000;
+    try {
+      const { failSnap } = await chrome.storage.session.get("failSnap");
+      if (!failSnap || Date.now() - failSnap.ts > SNAP_TTL_MS) return;
+      // Same page (ignoring query string), otherwise a hint elsewhere on the
+      // web could pair with a stale snapshot from another site.
+      const samePage =
+        failSnap.pageUrl &&
+        failSnap.pageUrl.split("?")[0] === location.href.split("?")[0];
+      if (!samePage) return;
+      const bodyText = document.body.textContent || "";
+      if (!FAIL_HINT_PATTERN.test(bodyText)) return;
+      await saveFailSample("submit_failed", failSnap);
+      await chrome.storage.session.remove("failSnap");
+    } catch (err) {
+      console.warn("[captcha-autofill] page-load failure check skipped:", err);
+    }
+  }
+
   function setupFailHintMonitor() {
-    // Only hints that *appear* after page load count as a rejected submit;
-    // static page text (e.g. the input label "图形验证码") must not trigger.
+    // Detect rejected submits on pages that update in place (no reload).
+    // Three shapes: newly inserted text node, newly inserted element, or
+    // text changed inside an existing element (characterData). Static page
+    // text (e.g. the input label "图形验证码") is already in the DOM before
+    // this observer starts, so it can never match.
     const monitor = new MutationObserver((mutations) => {
       if (Date.now() - failHintLastAt < FAIL_HINT_DEDUP_MS) return;
       const input = document.querySelector(config.inputSelector);
       if (!(lastFilled || (input && input.value))) return; // nothing submitted
       for (const m of mutations) {
-        for (const node of m.addedNodes) {
-          if (node.nodeType !== Node.TEXT_NODE) continue;
-          const text = node.nodeValue || "";
-          if (text.length > 500) continue;
-          if (FAIL_HINT_PATTERN.test(text)) {
-            failHintLastAt = Date.now();
-            captureSubmitFailure();
-            return;
+        let text = "";
+        if (m.type === "characterData") {
+          text = m.target.nodeValue || "";
+        } else {
+          for (const node of m.addedNodes) {
+            if (node.nodeType === Node.TEXT_NODE) {
+              text = node.nodeValue || "";
+              break;
+            }
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const t = node.textContent || "";
+              if (t.length <= 5000) { text = t; break; }
+            }
           }
+        }
+        if (!text || text.length > 5000) continue;
+        if (FAIL_HINT_PATTERN.test(text)) {
+          failHintLastAt = Date.now();
+          captureSubmitFailure();
+          return;
         }
       }
     });
-    monitor.observe(document.body, { childList: true, subtree: true });
+    monitor.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
   }
 
   // ------------------------------------------------------------- auto-fill
@@ -265,7 +307,13 @@
         lastFilled = result.label;
         const dataUrl = await snapshotImage(img);
         if (dataUrl) {
-          lastSnap = { dataUrl, imgSrc: img.src, label: result.label, confs: result.perSlot, conf: result.conf };
+          const snap = { dataUrl, imgSrc: img.src, label: result.label, confs: result.perSlot, conf: result.conf };
+          lastSnap = snap;
+          // Survive a whole-page reload after a rejected submit (see
+          // checkPageLoadSubmitFailure).
+          chrome.storage.session.set({
+            failSnap: { ...snap, pageUrl: location.href, ts: Date.now() },
+          }).catch(() => {});
         }
         showStatus(`已填充 ${result.label}（置信度 ${result.conf.toFixed(2)}）`, "ok");
         return;
@@ -304,6 +352,9 @@
 
   async function setupAutoFill(cfg) {
     config = cfg;
+    // Check for a rejected submit that landed us on a reloaded page before
+    // the auto-fill below overwrites the persisted snapshot.
+    await checkPageLoadSubmitFailure();
     try {
       await CaptchaRecognizer.init(EXT_BASE + "model.onnx", EXT_BASE + "vendor/onnxruntime-web/");
     } catch (err) {
