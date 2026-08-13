@@ -43,6 +43,35 @@ jobs:
           cd browser/extension
           zip -r "../../verification-code-extension-v${{ steps.version.outputs.version }}.zip" .
 
+      - name: Build release notes
+        id: notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PREV_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || true)
+          if [ -n "$PREV_TAG" ]; then
+            LOG=$(git log --oneline "$PREV_TAG"..HEAD)
+          else
+            LOG=$(git log --oneline -15)
+          fi
+          NOTES="## 安装说明
+
+1. 下载本 Release 资产 \`verification-code-extension-v${{ steps.version.outputs.version }}.zip\`
+2. 解压到任意目录
+3. \`chrome://extensions\` → 开发者模式 → 加载已解压的扩展程序 → 选择解压目录
+
+## 更新内容
+
+\`\`\`text
+$LOG
+\`\`\`
+"
+          {
+            echo "notes<<NOTES_EOF"
+            echo "$NOTES"
+            echo "NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Publish Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -50,9 +79,8 @@ jobs:
           TAG="v${{ steps.version.outputs.version }}"
           ZIP="verification-code-extension-v${{ steps.version.outputs.version }}.zip"
           gh release create "$TAG" "$ZIP" \
-            --generate-notes \
             --title "验证码自动识别填充 $TAG" \
-            --notes "浏览器扩展打包：加载已解压的扩展程序选择 browser/extension，或解压本 zip 后加载。" || {
+            --notes "${{ steps.notes.outputs.notes }}" || {
             echo "::error::Release $TAG 已存在（或创建失败），请先更新 manifest.json 版本号"
             exit 1
           }

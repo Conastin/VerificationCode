@@ -157,7 +157,9 @@ extension/
 
 ### 安装
 
-`chrome://extensions` → 开发者模式 → 加载已解压的扩展程序 → 选择 `browser/extension`。
+**方式一（源码版）**：`chrome://extensions` → 开发者模式 → 加载已解压的扩展程序 → 选择 `browser/extension`。
+
+**方式二（发布版）**：从仓库 [Releases](https://github.com/Conastin/VerificationCode/releases) 页下载 `verification-code-extension-vX.Y.Z.zip`，解压后按方式一加载。zip 由 GitHub Actions 自动打包发布，版本号与 `manifest.json` 一致；更新内容见对应 Release 说明。
 
 ### 使用
 
