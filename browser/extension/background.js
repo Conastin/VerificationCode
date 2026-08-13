@@ -12,11 +12,11 @@ const CONTENT_FILES = [
   "content.js",
 ];
 
-// Let content scripts persist the fail-sample snapshot across page reloads
-// (chrome.storage.session is restricted to trusted contexts by default).
-chrome.storage.session
-  .setAccessLevel({ accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS" })
-  .catch((err) => console.warn("[captcha-autofill] setAccessLevel failed:", err));
+// The fail-sample snapshot (image + prediction) must survive a whole-page
+// reload, but content scripts cannot touch chrome.storage.session directly
+// ("Access to storage is not allowed from this context"). All session
+// storage goes through these background-side handlers instead (see
+// storeFailSnap / getFailSnap / clearFailSnap below).
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => {
@@ -71,6 +71,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     countFails,
     exportFails,
     clearFails,
+    // Fail-snapshot relay: content scripts are barred from storage.session,
+    // so reads/writes are proxied here (trusted context).
+    storeFailSnap: async (msg) => {
+      await chrome.storage.session.set({ failSnap: msg.snap });
+      return { ok: true };
+    },
+    getFailSnap: async () => {
+      const { failSnap } = await chrome.storage.session.get("failSnap");
+      return { failSnap: failSnap || null };
+    },
+    clearFailSnap: async () => {
+      await chrome.storage.session.remove("failSnap");
+      return { ok: true };
+    },
   }[message?.type];
   if (!handle) return;
   handle().then(sendResponse).catch((err) => {

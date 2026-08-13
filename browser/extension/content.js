@@ -214,11 +214,13 @@
   async function checkPageLoadSubmitFailure() {
     // Rejected submits often reload the whole page: the reject hint is
     // already in the DOM when this script runs (no mutation to observe) and
-    // the in-memory snapshot is gone. The snapshot we cached at fill time
-    // survives in chrome.storage.session — use it if a fresh hint is present.
+    // the in-memory snapshot is gone. The snapshot cached at fill time
+    // survives via the background (storage.session) — use it if a fresh hint
+    // is present.
     const SNAP_TTL_MS = 60000;
     try {
-      const { failSnap } = await chrome.storage.session.get("failSnap");
+      const resp = await chrome.runtime.sendMessage({ type: "getFailSnap" });
+      const failSnap = resp?.failSnap;
       if (!failSnap || Date.now() - failSnap.ts > SNAP_TTL_MS) return;
       // Same page (ignoring query string), otherwise a hint elsewhere on the
       // web could pair with a stale snapshot from another site.
@@ -229,7 +231,7 @@
       const bodyText = document.body.textContent || "";
       if (!FAIL_HINT_PATTERN.test(bodyText)) return;
       await saveFailSample("submit_failed", failSnap);
-      await chrome.storage.session.remove("failSnap");
+      await chrome.runtime.sendMessage({ type: "clearFailSnap" }).catch(() => {});
     } catch (err) {
       console.warn("[captcha-autofill] page-load failure check skipped:", err);
     }
@@ -309,10 +311,11 @@
         if (dataUrl) {
           const snap = { dataUrl, imgSrc: img.src, label: result.label, confs: result.perSlot, conf: result.conf };
           lastSnap = snap;
-          // Survive a whole-page reload after a rejected submit (see
-          // checkPageLoadSubmitFailure).
-          chrome.storage.session.set({
-            failSnap: { ...snap, pageUrl: location.href, ts: Date.now() },
+          // Survive a whole-page reload after a rejected submit: relayed to
+          // the background (see checkPageLoadSubmitFailure).
+          chrome.runtime.sendMessage({
+            type: "storeFailSnap",
+            snap: { ...snap, pageUrl: location.href, ts: Date.now() },
           }).catch(() => {});
         }
         showStatus(`已填充 ${result.label}（置信度 ${result.conf.toFixed(2)}）`, "ok");
