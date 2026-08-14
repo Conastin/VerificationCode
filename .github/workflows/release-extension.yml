@@ -74,9 +74,9 @@ jobs:
           OTHER=$(printf '%s\n' "$LOG" | grep -vE "${P}(feat|feature|fix|bug|bugfix|perf|refactor|test|docs|doc|ci|chore|build)(\(|:)" || true)
           NOTES="## 安装说明
 
-          1. 下载本 Release 资产 \`verification-code-extension-v${{ steps.version.outputs.version }}.zip\`
+          1. 下载本 Release 资产 verification-code-extension-v${{ steps.version.outputs.version }}.zip
           2. 解压到任意目录
-          3. \`chrome://extensions\` → 开发者模式 → 加载已解压的扩展程序 → 选择解压目录
+          3. 打开 chrome://extensions → 开发者模式 → 加载已解压的扩展程序 → 选择解压目录
 
           ## 更新内容
           "
