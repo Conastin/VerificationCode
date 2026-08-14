@@ -4,9 +4,12 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# 数据与模型（体积大，且含内网真实样本，不入库）
-data/
-checkpoints/
+# 数据与模型（体积大，且含内网真实样本，不入库；仅公开以下可复现项）
+data/*
+!data/real_test_independent/
+!data/real_human/
+checkpoints/*
+!checkpoints/best.pt
 
 # 日志与临时文件
 *.log

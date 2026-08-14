@@ -221,15 +221,17 @@ flowchart LR
 </details>
 
 <details>
-<summary>📂 数据目录组成</summary>
+<summary>📂 数据目录组成（✅ = 随仓库分发，🔒 = 本地保留）</summary>
 
 ```text
-data/real_all/                  # 10200 张训练样本（真实，含 labels.txt）
-data/real_human/                # 1791 张人工精确标注子集
-data/real_trusted/              # 609 张置信度≥0.9 直接信任子集
-data/real_test_independent/     # 1000 张独立测试集（人工标注，勿用于训练）
-data/train31/ data/val31/       # 31 类合成样本（微调防遗忘用）
-data/raw/                       # 历史真实样本
+data/real_all/                  # 🔒 10200 张训练样本（真实，含 labels.txt）
+data/real_human/                # ✅ 1791 张人工精确标注子集
+data/real_trusted/              # 🔒 609 张置信度≥0.9 直接信任子集
+data/real_test_independent/     # ✅ 1000 张独立测试集（人工标注，勿用于训练）
+data/train31/ data/val31/       # 🔒 31 类合成样本（微调防遗忘用）
+data/raw/                       # 🔒 历史真实样本
+checkpoints/best.pt             # ✅ 模型权重（Python 工具链入口）
+checkpoints/best.onnx           # 🔒 单文件 ONNX（扩展内置同款，见 browser/extension/model.onnx）
 ```
 
 </details>
@@ -251,12 +253,12 @@ data/raw/                       # 历史真实样本
 │       └── vendor/          # onnxruntime-web WASM 运行时（零外网依赖）
 ├── tests/                   # pytest 测试
 ├── reports/                 # 评估报告、登录校验明细
-├── data/                    # 数据（不入库，见 .gitignore）
-├── checkpoints/             # 模型权重（不入库，见 .gitignore）
+├── data/                    # 数据（部分入库，见「数据目录组成」）
+├── checkpoints/             # 模型权重（best.pt 入库，best.onnx 同款已内置扩展）
 └── requirements.txt
 ```
 
-> ⚠️ `data/`（约 300MB）与 `checkpoints/` 体积大且含内网真实样本，**不随仓库分发**。按"数据闭环方法"自行采集微调，或用 `export_onnx.py` 重新导出模型。
+> ⚠️ `data/` 与 `checkpoints/` 仅公开可复现项：`checkpoints/best.pt`（模型权重）、`data/real_test_independent`（独立测试集）、`data/real_human`（人工标注子集）。真实采集样本（`real_all` 等）含内网数据**不随仓库分发**，按"数据闭环方法"自行采集微调。
 
 ---
 
