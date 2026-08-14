@@ -1,13 +1,18 @@
 /* Universal content script.
  *
- * - Right-click "标记为验证码并自动填充" on any page image -> locate the
- *   image, auto-find the captcha input, persist the config per-origin, then
- *   the background reloads the page.
- * - On every page load: if a config exists for this origin, auto-fill the
- *   captcha (recognize -> fill if conf >= 0.9, else click the image to
- *   refresh and retry). A MutationObserver on the image src covers manual
- *   refreshes too.
- * - Status badge auto-hides after a few seconds.
+ * Two captcha modes, configured per-origin from the visual config bar
+ * (right-click "配置本站验证码" or the popup button), by picking elements
+ * on the page:
+ *
+ * - image: an <img> captcha. Auto-fill recognizes the image (conf >= 0.9)
+ *   and fills the input; low-confidence attempts click the image to refresh
+ *   and retry.
+ * - text: the captcha is rendered as plain DOM text (e.g. skylumo.cc).
+ *   Auto-fill reads the element text, extracts the code (textPattern), and
+ *   fills the input. No ONNX model is loaded in this mode.
+ *
+ * A MutationObserver covers manual refreshes (image src change / text
+ * element change). Status badge auto-hides after a few seconds.
  */
 "use strict";
 
@@ -17,6 +22,8 @@
   const CONF_THRESHOLD = 0.9;
   const BADGE_HIDE_MS = 4000;
   const EXT_BASE = chrome.runtime.getURL("");
+  // Default extraction regex for text-mode captchas (3-8 alphanumerics).
+  const DEFAULT_TEXT_PATTERN = /^[0-9A-Za-z]{3,8}$/;
   // Fail-sample collection: server-side captcha-reject hints (dynamic only,
   // see setupFailHintMonitor) and dedup window.
   const FAIL_HINT_PATTERN =
@@ -29,7 +36,8 @@
   let lastAttemptAt = 0;
   let busy = false;
   let lastFilled = "";
-  let config = null; // { imgSelector, inputSelector } for this origin
+  let autoRetry = false; // extension clicked the refresh button; may overwrite input
+  let config = null; // { mode, imgSelector?, textSelector?, inputSelector, textPattern?, refreshSelector? }
   let lastSnap = null; // { dataUrl, imgSrc, label, confs, conf } of the last fill
   let failHintLastAt = 0;
 
@@ -114,26 +122,37 @@
     return path.join(" > ");
   }
 
-  function findCaptchaInput(img) {
-    // 1) Attribute hints common for captcha inputs.
-    const pattern = /captcha|verif|imgcode|validate|checkcode|yanzheng|code|verify/i;
-    const candidates = document.querySelectorAll(
-      'input[type="text"], input[type="tel"], input:not([type]), textarea'
-    );
-    for (const el of candidates) {
-      const hay = [el.name, el.id, el.placeholder, el.className].join(" ");
-      if (pattern.test(hay)) return el;
+  // Selector for persisted configs: prefer id/name, then the first class that
+  // alone uniquely identifies the element, then the full class list, and fall
+  // back to the DOM path. Short selectors survive SPA re-renders better than
+  // paths and stay readable in the config bar.
+  function uniqueSelector(el) {
+    if (el.id) return "#" + CSS.escape(el.id);
+    if (el.name) return el.tagName.toLowerCase() + '[name="' + CSS.escape(el.name) + '"]';
+    const tag = el.tagName.toLowerCase();
+    if (el.classList.length) {
+      for (const c of el.classList) {
+        const sel = tag + "." + CSS.escape(c);
+        if (el.matches(sel) && document.querySelectorAll(sel).length === 1) return sel;
+      }
+      const full = tag + "." + Array.from(el.classList).map((c) => CSS.escape(c)).join(".");
+      if (el.matches(full) && document.querySelectorAll(full).length === 1) return full;
     }
-    // 2) Nearest text input: same container as the image, then ancestors.
-    let node = img.parentElement;
-    for (let i = 0; i < 4 && node; i++) {
-      const inputs = node.querySelectorAll('input[type="text"], input:not([type])');
-      if (inputs.length) return inputs[inputs.length - 1];
+    return bestSelector(el);
+  }
+
+  // Click targets are often bare text nodes/span wrappers with no stable
+  // hooks; walk up to the nearest element that carries an id/name/class so
+  // the generated selector survives SPA re-renders. Interactive elements
+  // (img/input/textarea/canvas) are kept as-is.
+  function resolvePickElement(el) {
+    if (["IMG", "CANVAS", "INPUT", "TEXTAREA"].includes(el.tagName)) return el;
+    let node = el;
+    while (node && node !== document.body) {
+      if (node.id || node.name || node.classList.length) return node;
       node = node.parentElement;
     }
-    // 3) Single short text input on the page.
-    if (candidates.length === 1) return candidates[0];
-    return null;
+    return el;
   }
 
   // ------------------------------------------------------------ fail samples
@@ -272,6 +291,22 @@
         if (!text || text.length > 5000) continue;
         if (FAIL_HINT_PATTERN.test(text)) {
           failHintLastAt = Date.now();
+          if (config.mode === "text") {
+            // Text captchas carry no image snapshot: retry via the optional
+            // refresh button, otherwise just warn. autoRetry lets the next
+            // fill overwrite the stale wrong value left in the input.
+            if (config.refreshSelector) {
+              const btn = document.querySelector(config.refreshSelector);
+              if (btn) {
+                autoRetry = true;
+                btn.click();
+                showStatus("验证码不正确，已点击更换验证码重试", "retry");
+                return;
+              }
+            }
+            showStatus("验证码不正确，请手动刷新验证码", "fail");
+            return;
+          }
           captureSubmitFailure();
           return;
         }
@@ -285,10 +320,43 @@
   }
 
   // ------------------------------------------------------------- auto-fill
+  async function runTextFillCore() {
+    const input = document.querySelector(config.inputSelector);
+    if (!input) { showStatus("未找到验证码输入框", "fail"); return; }
+    if (input.value && input.value !== lastFilled && !autoRetry) return; // user typed
+    autoRetry = false;
+    attemptCount++;
+    lastAttemptAt = Date.now();
+
+    const textEl = document.querySelector(config.textSelector);
+    if (!textEl) { showStatus("未找到验证码文本元素", "fail"); return; }
+    const raw = (textEl.textContent || "").trim();
+    let pattern = DEFAULT_TEXT_PATTERN;
+    try {
+      pattern = config.textPattern ? new RegExp(config.textPattern) : DEFAULT_TEXT_PATTERN;
+    } catch (err) {
+      console.warn("[captcha-autofill] invalid textPattern, falling back:", err);
+    }
+    const m = raw.match(pattern);
+    if (!m) {
+      showStatus(`验证码文本无法匹配: ${raw.slice(0, 24) || "(空)"}`, "fail");
+      return;
+    }
+    const code = m[0];
+    if (code === lastFilled && input.value === code) return; // already filled
+    setInputValue(input, code);
+    lastFilled = code;
+    showStatus(`已填充 ${code}`, "ok");
+  }
+
   async function runAutoFill() {
     if (busy || !config) return;
     busy = true;
     try {
+      if (config.mode === "text") {
+        await runTextFillCore();
+        return;
+      }
       const input = document.querySelector(config.inputSelector);
       if (!input) { showStatus("未找到验证码输入框", "fail"); return; }
       if (input.value && input.value !== lastFilled) return; // user typed
@@ -352,7 +420,7 @@
   function scheduleAutoFill() {
     if (!config) return;
     const input = document.querySelector(config.inputSelector);
-    if (input && input.value && input.value !== lastFilled) return;
+    if (input && input.value && input.value !== lastFilled && !autoRetry) return;
     if (busy) return;
     if (Date.now() - lastAttemptAt > RESET_WINDOW_MS) attemptCount = 0;
     if (attemptCount >= MAX_ATTEMPTS) return;
@@ -385,47 +453,401 @@
     scheduleAutoFill();
   }
 
-  // ------------------------------------------------------------------ mark
-  async function handleMark(srcUrl) {
-    const imgs = Array.from(document.querySelectorAll("img"));
-    const img = imgs.find((el) => {
-      const src = el.currentSrc || el.src || "";
-      return src && (src === srcUrl || src.endsWith(srcUrl) || srcUrl.endsWith(src.split("?")[0]));
-    }) || imgs.find((el) => {
-      const src = el.currentSrc || el.src || "";
-      return src && src.split("?")[0] === srcUrl.split("?")[0];
+  async function setupTextAutoFill(cfg) {
+    config = cfg;
+    // Text mode needs no ONNX model: the captcha is read straight from the
+    // DOM, so auto-fill starts with zero warm-up cost.
+    const textEl = await waitFor(config.textSelector);
+    if (!textEl) {
+      showStatus("未找到验证码文本元素，请检查选择器", "fail");
+      return;
+    }
+    // Manual "更换验证码" refreshes replace the text -> re-read and re-fill.
+    new MutationObserver(() => {
+      if (!busy && Date.now() - lastAttemptAt > 500) scheduleAutoFill();
+    }).observe(textEl, { childList: true, characterData: true, subtree: true });
+    // The whole page may rebuild the element after a rejected submit.
+    new MutationObserver(() => {
+      const current = document.querySelector(config.textSelector);
+      if (current && current !== textEl) scheduleAutoFill();
+    }).observe(document.body, { childList: true, subtree: true });
+    setupFailHintMonitor();
+    scheduleAutoFill();
+  }
+
+  // --------------------------------------------------- selector test (popup)
+  async function handleTestSelectors(sel) {
+    const query = (selector) => {
+      if (!selector) return { skipped: true };
+      try {
+        const els = Array.from(document.querySelectorAll(selector));
+        return { found: els.length > 0, count: els.length };
+      } catch (err) {
+        return { found: false, error: String(err) };
+      }
+    };
+    const paint = (selector, color) => {
+      if (!selector) return;
+      let els = [];
+      try { els = Array.from(document.querySelectorAll(selector)); } catch { return; }
+      for (const el of els.slice(0, 8)) {
+        el.style.outline = `3px solid ${color}`;
+        setTimeout(() => { el.style.outline = ""; }, 4000);
+      }
+    };
+    paint(sel.textSelector, "#e11d48");   // text element -> red
+    paint(sel.inputSelector, "#2f6b0f");  // input -> green
+    paint(sel.refreshSelector, "#2563eb"); // refresh button -> blue
+    const out = {
+      origin: location.origin,
+      text: { ...query(sel.textSelector) },
+      input: { ...query(sel.inputSelector) },
+      refresh: { ...query(sel.refreshSelector) },
+    };
+    if (out.text.found) {
+      const el = document.querySelector(sel.textSelector);
+      const raw = (el.textContent || "").trim();
+      out.text.sample = raw.slice(0, 30);
+      let pattern = DEFAULT_TEXT_PATTERN;
+      try {
+        pattern = sel.textPattern ? new RegExp(sel.textPattern) : DEFAULT_TEXT_PATTERN;
+      } catch { /* keep default */ }
+      const m = raw.match(pattern);
+      out.text.extracted = m ? m[0] : null;
+    }
+    return out;
+  }
+
+  // --------------------------------------------------- visual config bar
+  // Click-to-pick config flow: a floating bar on top of the page lets the
+  // user click the captcha element (image or text), the input, and optionally
+  // the refresh button. Selectors are generated automatically; saving applies
+  // instantly via chrome.storage.onChanged.
+  const PICK_LABEL = { captcha: "验证码元素", input: "输入框", refresh: "更换验证码按钮" };
+  const PICK_COLOR = { captcha: "#e11d48", input: "#2f6b0f", refresh: "#b8860b" };
+  const PICK_GLOW = {
+    captcha: "rgba(225,29,72,.75)",
+    input: "rgba(47,107,15,.75)",
+    refresh: "rgba(184,134,11,.75)",
+    hover: "rgba(37,99,235,.75)",
+  };
+
+  // Highlight = 3px colored outline + white isolation ring + outer glow, so
+  // it stays clearly visible on any page background / framework (plain
+  // outlines get lost against busy or light-colored layouts). An inset ring
+  // mirrors the outline inside the element: when an overflow:hidden ancestor
+  // clips the outer ring (common in card-style login forms), the inner ring
+  // keeps the highlight fully visible.
+  function paintHighlight(el, kind) {
+    if (!el || !el.style) return;
+    const color = kind === "hover" ? "#2563eb" : PICK_COLOR[kind];
+    el.style.outline = `3px solid ${color}`;
+    el.style.boxShadow =
+      `inset 0 0 0 3px ${color}, 0 0 0 2px #fff, 0 0 12px 3px ${PICK_GLOW[kind]}`;
+  }
+
+  function clearHighlight(el) {
+    if (!el || !el.style) return;
+    el.style.outline = "";
+    el.style.boxShadow = "";
+  }
+
+  // A picked element may serve several roles (e.g. on image captchas the
+  // "更换验证码按钮" is the image itself). Keep the first role's highlight;
+  // later roles reuse it without repainting over it.
+  function highlightKindOf(el, excludeKind) {
+    return Object.keys(configPicked).find(
+      (k) => k !== excludeKind && configPicked[k] && configPicked[k].el === el
+    );
+  }
+
+  // Restore a picked element's role color after hover moves away; elements
+  // that are not picked simply lose their highlight.
+  function restoreOrClearHighlight(el) {
+    const k = highlightKindOf(el);
+    if (k) paintHighlight(el, k);
+    else clearHighlight(el);
+  }
+
+  let configBarEl = null;
+  let configPick = null;   // "captcha" | "input" | "refresh" | null
+  let configMode = null;   // "text" | "image", derived from the picked captcha
+  let configPicked = {};   // { captcha: {el, sel}, input: {...}, refresh: {...} }
+  let configHoverEl = null;
+
+  function configStatus(text) {
+    const el = configBarEl && configBarEl.querySelector(".vcbar-status");
+    if (el) el.textContent = text;
+  }
+
+  function configBarButton(kind) {
+    return configBarEl && configBarEl.querySelector(`[data-kind="${kind}"]`);
+  }
+
+  function refreshConfigBar() {
+    if (!configBarEl) return;
+    for (const kind of ["captcha", "input", "refresh"]) {
+      const btn = configBarButton(kind);
+      const sel = configPicked[kind] && configPicked[kind].sel;
+      const label = sel
+        ? `${PICK_LABEL[kind]} · ${sel}`
+        : PICK_LABEL[kind] + (kind === "refresh" ? "(可选)" : "");
+      btn.textContent = label;
+      btn.classList.toggle("picked", !!sel);
+      btn.classList.toggle("active", configPick === kind);
+    }
+    const typeEl = configBarEl.querySelector(".vcbar-type");
+    if (typeEl) {
+      typeEl.textContent = configMode
+        ? `类型: ${configMode === "image" ? "图片验证码" : "纯文字验证码"}`
+        : "类型: 未选择";
+    }
+  }
+
+  function clearConfigPick() {
+    configPick = null;
+    if (configHoverEl) { restoreOrClearHighlight(configHoverEl); configHoverEl = null; }
+    refreshConfigBar();
+  }
+
+  function startConfigPick(kind) {
+    if (configPick === kind) { clearConfigPick(); return; }
+    clearConfigPick();
+    configPick = kind;
+    configStatus(`请点击页面上的${PICK_LABEL[kind]}（悬停高亮，Esc 取消）`);
+    refreshConfigBar();
+  }
+
+  function onConfigMove(e) {
+    if (!configPick) return;
+    const raw = e.target;
+    if (!raw || raw.nodeType !== 1 || raw === document.body || raw === document.documentElement) return;
+    if (configBarEl && configBarEl.contains(raw)) return;
+    const el = resolvePickElement(raw);
+    if (configHoverEl && configHoverEl !== el) restoreOrClearHighlight(configHoverEl);
+    if (configHoverEl !== el) {
+      if (highlightKindOf(el)) return; // already picked: keep its role color
+      configHoverEl = el;
+      paintHighlight(el, "hover");
+    }
+  }
+
+  function onConfigClick(e) {
+    if (!configPick) return;
+    if (configBarEl && configBarEl.contains(e.target)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const raw = e.target;
+    if (!raw || raw.nodeType !== 1 || raw === document.body || raw === document.documentElement) return;
+    const el = resolvePickElement(raw);
+    if (configHoverEl) { restoreOrClearHighlight(configHoverEl); configHoverEl = null; }
+    const kind = configPick;
+    // Replacing a previously picked element: clear its old highlight, unless
+    // another role still points at it (then repaint in that role's color).
+    if (configPicked[kind] && configPicked[kind].el) {
+      const old = configPicked[kind].el;
+      const otherKind = highlightKindOf(old, kind);
+      if (otherKind) paintHighlight(old, otherKind);
+      else clearHighlight(old);
+    }
+    if (kind === "captcha") {
+      configMode = el.tagName === "IMG" ? "image" : "text";
+    }
+    configPicked[kind] = { el, sel: uniqueSelector(el) };
+    const mergedKind = highlightKindOf(el, kind);
+    if (mergedKind) {
+      configStatus(`"${PICK_LABEL[kind]}"与"${PICK_LABEL[mergedKind]}"为同一元素，已合并标记`);
+    } else {
+      paintHighlight(el, kind);
+      configStatus(`已选中${PICK_LABEL[kind]}: ${configPicked[kind].sel}`);
+    }
+    configPick = null;
+    refreshConfigBar();
+  }
+
+  function onConfigKey(e) {
+    if (e.key === "Escape") {
+      if (configPick) clearConfigPick();
+      else hideConfigBar();
+    }
+  }
+
+  function saveConfigBar() {
+    if (!configPicked.captcha) { configStatus("请先选择验证码元素"); return; }
+    if (!configPicked.input) { configStatus("请先选择输入框"); return; }
+    let cfg;
+    if (configMode === "image") {
+      cfg = {
+        mode: "image",
+        imgSelector: configPicked.captcha.sel,
+        inputSelector: configPicked.input.sel,
+        refreshSelector: configPicked.refresh ? configPicked.refresh.sel : undefined,
+      };
+    } else {
+      cfg = {
+        mode: "text",
+        textSelector: configPicked.captcha.sel,
+        inputSelector: configPicked.input.sel,
+        refreshSelector: configPicked.refresh ? configPicked.refresh.sel : undefined,
+      };
+    }
+    chrome.storage.local.set({ [location.origin]: cfg }).then(() => {
+      configStatus("已保存，配置自动生效");
+      setTimeout(hideConfigBar, 1200);
     });
-    if (!img) throw new Error("未找到图片元素（可能已加载完毕被移除）");
+  }
 
-    const input = findCaptchaInput(img);
-    if (!input) throw new Error("未找到验证码输入框，请确认输入框为文本类型");
+  function showConfigBar() {
+    if (configBarEl) return;
+    const bar = document.createElement("div");
+    bar.className = "vcbar";
+    bar.style.cssText =
+      "position:fixed;top:0;left:0;right:0;z-index:2147483647;" +
+      "background:#1f2937;color:#fff;font:13px/1.5 'Microsoft YaHei',sans-serif;" +
+      "padding:10px 16px;box-shadow:0 2px 12px rgba(0,0,0,.4);" +
+      "display:flex;flex-wrap:wrap;align-items:center;gap:8px;";
+    bar.innerHTML =
+      '<span style="font-weight:bold">配置验证码 · <span class="vcbar-origin" ' +
+      'style="font-weight:normal;color:#9ca3af"></span></span>' +
+      '<button data-kind="captcha" class="vcbar-btn">验证码元素</button>' +
+      '<button data-kind="input" class="vcbar-btn">输入框</button>' +
+      '<button data-kind="refresh" class="vcbar-btn">更换验证码按钮(可选)</button>' +
+      '<span class="vcbar-type" style="color:#9ca3af;font-size:12px"></span>' +
+      '<span class="vcbar-status" style="flex:1;color:#34d399;font-size:12px;text-align:right"></span>' +
+      '<button class="vcbar-save">保存配置</button>' +
+      '<button class="vcbar-cancel">取消</button>';
+    const style = document.createElement("style");
+    style.textContent =
+      ".vcbar-btn{background:#374151;color:#fff;border:1px solid #4b5563;border-radius:6px;" +
+      "padding:6px 12px;cursor:pointer;font-size:12px}" +
+      ".vcbar-btn:hover{background:#4b5563}" +
+      ".vcbar-btn.active{outline:2px solid #f59e0b}" +
+      ".vcbar-btn.picked[data-kind=\"captcha\"]{background:#e11d48;border-color:#e11d48}" +
+      ".vcbar-btn.picked[data-kind=\"input\"]{background:#2f6b0f;border-color:#2f6b0f}" +
+      ".vcbar-btn.picked[data-kind=\"refresh\"]{background:#b8860b;border-color:#b8860b}" +
+      ".vcbar-save{background:#2f6b0f;color:#fff;border:none;border-radius:6px;" +
+      "padding:6px 14px;cursor:pointer;font-size:12px;font-weight:bold}" +
+      ".vcbar-save:hover{background:#3a8313}" +
+      ".vcbar-cancel{background:#4b5563;color:#fff;border:none;border-radius:6px;" +
+      "padding:6px 14px;cursor:pointer;font-size:12px}" +
+      ".vcbar-cancel:hover{background:#6b7280}";
+    bar.appendChild(style);
+    bar.querySelector(".vcbar-origin").textContent = location.origin;
+    bar.querySelector('[data-kind="captcha"]').addEventListener("click", () => startConfigPick("captcha"));
+    bar.querySelector('[data-kind="input"]').addEventListener("click", () => startConfigPick("input"));
+    bar.querySelector('[data-kind="refresh"]').addEventListener("click", () => startConfigPick("refresh"));
+    bar.querySelector(".vcbar-save").addEventListener("click", saveConfigBar);
+    bar.querySelector(".vcbar-cancel").addEventListener("click", hideConfigBar);
+    configBarEl = bar;
+    document.body.appendChild(bar);
+    document.addEventListener("mousemove", onConfigMove, true);
+    document.addEventListener("click", onConfigClick, true);
+    document.addEventListener("keydown", onConfigKey, true);
+    refreshConfigBar();
+    configStatus("点击按钮后在页面上点选对应元素，保存后自动生效");
+    loadExistingConfig();
+  }
 
-    const cfg = { imgSelector: bestSelector(img), inputSelector: bestSelector(input) };
-    await chrome.storage.local.set({ [location.origin]: cfg });
-    showStatus("已标记，正在刷新页面测试…", "ok");
-    return cfg;
+  // Load a previously saved config into the bar: shows the stored selectors
+  // on the buttons and highlights the configured elements on the page so the
+  // user sees what is already wired up (and can re-pick any of them).
+  async function loadExistingConfig() {
+    try {
+      const data = await chrome.storage.local.get(location.origin);
+      const cfg = data[location.origin];
+      if (!cfg) return;
+      // SPA pages may render the elements after the bar opens; retry briefly.
+      const targetSel = cfg.mode === "text" ? cfg.textSelector : cfg.imgSelector;
+      for (let i = 0; i < 10; i++) {
+        let ready = true;
+        for (const sel of [targetSel, cfg.inputSelector]) {
+          if (sel) {
+            try { if (!document.querySelector(sel)) ready = false; } catch { ready = false; }
+          }
+        }
+        if (ready || i === 9) break;
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      const pickFrom = (sel, kind) => {
+        if (!sel) return;
+        let el = null;
+        try { el = document.querySelector(sel); } catch { return; }
+        if (!el) return;
+        // Same element serving several roles: keep the first role's color.
+        if (!highlightKindOf(el, kind)) paintHighlight(el, kind);
+        configPicked[kind] = { el, sel };
+      };
+      if (cfg.mode === "text") {
+        configMode = "text";
+        pickFrom(cfg.textSelector, "captcha");
+        pickFrom(cfg.inputSelector, "input");
+        pickFrom(cfg.refreshSelector, "refresh");
+      } else {
+        configMode = "image";
+        pickFrom(cfg.imgSelector, "captcha");
+        pickFrom(cfg.inputSelector, "input");
+        pickFrom(cfg.refreshSelector, "refresh");
+      }
+      refreshConfigBar();
+      const n = Object.keys(configPicked).length;
+      if (n) {
+        configStatus(`已加载本站已有配置（${n} 项已高亮），可点击按钮重新选择`);
+      }
+    } catch (err) {
+      console.warn("[captcha-autofill] loadExistingConfig failed:", err);
+    }
+  }
+
+  function hideConfigBar() {
+    clearConfigPick();
+    document.removeEventListener("mousemove", onConfigMove, true);
+    document.removeEventListener("click", onConfigClick, true);
+    document.removeEventListener("keydown", onConfigKey, true);
+    if (configBarEl) { configBarEl.remove(); configBarEl = null; }
+    for (const kind of Object.keys(configPicked)) {
+      clearHighlight(configPicked[kind] && configPicked[kind].el);
+    }
+    configPicked = {};
+    configMode = null;
   }
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message?.type === "markCaptcha") {
-      handleMark(message.srcUrl)
-        .then((cfg) => {
-          sendResponse({ ok: true, imgSelector: cfg.imgSelector, inputSelector: cfg.inputSelector });
-          setTimeout(() => chrome.runtime.sendMessage({ type: "marked" }), 800);
-        })
-        .catch((err) => {
-          showStatus("标记失败: " + err.message, "fail");
-          sendResponse({ ok: false, error: String(err) });
-        });
+    if (message?.type === "testSelectors") {
+      handleTestSelectors(message)
+        .then(sendResponse)
+        .catch((err) => sendResponse({ ok: false, error: String(err) }));
       return true; // async response
+    }
+    if (message?.type === "startConfig") {
+      showConfigBar();
+      sendResponse({ ok: true });
+      return;
     }
   });
 
   // ---------------------------------------------------------------- startup
   chrome.storage.local.get(null).then((data) => {
     const cfg = data[location.origin];
-    if (cfg && cfg.imgSelector && cfg.inputSelector) {
+    if (cfg && cfg.mode === "text") {
+      setupTextAutoFill(cfg);
+    } else if (cfg && cfg.imgSelector && cfg.inputSelector) {
       setupAutoFill(cfg);
+    }
+  });
+
+  // Config saved from the popup applies without a page reload.
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local") return;
+    const change = changes[location.origin];
+    if (!change) return;
+    const cfg = change.newValue;
+    if (cfg && cfg.mode === "text") {
+      setupTextAutoFill(cfg);
+    } else if (cfg && cfg.imgSelector && cfg.inputSelector) {
+      setupAutoFill(cfg);
+    } else {
+      config = null;
+      showStatus("本站验证码配置已清除", "fail");
     }
   });
 })();

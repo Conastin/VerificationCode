@@ -2,10 +2,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>验证码失败样本</title>
+  <title>验证码自动识别填充</title>
   <style>
     body {
-      width: 260px;
+      width: 380px;
       margin: 0;
       padding: 14px 16px;
       font-family: "Microsoft YaHei", sans-serif;
@@ -14,34 +14,169 @@
     }
     h1 {
       font-size: 14px;
-      margin: 0 0 10px;
+      margin: 0 0 4px;
     }
-    #count {
-      margin-bottom: 12px;
+    #site {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 10px;
+      word-break: break-all;
+    }
+    section {
+      border: 1px solid #e2e2e2;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .group-title {
+      font-size: 12px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .mode-switch {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+    .mode-switch label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .field {
+      margin-bottom: 8px;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
       color: #555;
+      margin-bottom: 3px;
+    }
+    .field input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 5px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .hint {
+      font-size: 11px;
+      color: #999;
+      margin-top: 2px;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .row button {
+      flex: 1;
     }
     button {
-      width: 100%;
-      padding: 8px 0;
-      margin-bottom: 8px;
+      padding: 7px 0;
       border: none;
       border-radius: 6px;
       font-size: 13px;
       cursor: pointer;
       color: #fff;
     }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #testBtn { background: #2563eb; }
+    #testBtn:hover:not(:disabled) { background: #3b82f6; }
+    #saveBtn { background: #2f6b0f; }
+    #saveBtn:hover:not(:disabled) { background: #3a8313; }
+    #clearCfgBtn { background: #6b7280; width: 100%; }
+    #clearCfgBtn:hover:not(:disabled) { background: #7c8494; }
     #exportBtn { background: #2f6b0f; }
-    #exportBtn:hover { background: #3a8313; }
-    #clearBtn { background: #c00; }
-    #clearBtn:hover { background: #d11; }
-    #status { margin-top: 4px; font-size: 12px; color: #555; min-height: 16px; }
+    #exportBtn:hover:not(:disabled) { background: #3a8313; }
+    #clearFailsBtn { background: #c00; }
+    #clearFailsBtn:hover:not(:disabled) { background: #d11; }
+    #status {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #555;
+      min-height: 16px;
+      white-space: pre-wrap;
+    }
+    #count {
+      margin-bottom: 8px;
+      color: #555;
+      font-size: 12px;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 10px 0;
+    }
   </style>
 </head>
 <body>
-  <h1>验证码失败样本</h1>
+  <h1>验证码自动识别填充</h1>
+  <div id="site">加载中…</div>
+
+  <section>
+    <div class="group-title">本站验证码配置</div>
+    <button id="visualBtn" style="width:100%;background:#2563eb;margin-bottom:10px">
+      页面内可视化配置（点选验证码/输入框）
+    </button>
+    <div class="mode-switch">
+      <label><input type="radio" name="mode" value="text" checked> 纯文字</label>
+      <label><input type="radio" name="mode" value="image"> 图片</label>
+    </div>
+    <div id="textFields">
+      <div class="field">
+        <label>文字选择器（验证码文本所在元素）</label>
+        <input type="text" id="textSelector" placeholder="如 p.text-emerald-500">
+      </div>
+      <div class="field">
+        <label>输入框选择器</label>
+        <input type="text" id="inputSelector" placeholder="如 #verify-input">
+      </div>
+      <div class="field">
+        <label>文本正则（可选，默认提取 3~8 位字母数字）</label>
+        <input type="text" id="textPattern" placeholder="^[0-9A-Za-z]{3,8}$">
+        <div class="hint">从元素文本中匹配验证码，取第一个匹配组</div>
+      </div>
+      <div class="field">
+        <label>更换验证码按钮选择器（可选，失败时自动点击重试）</label>
+        <input type="text" id="refreshSelector" placeholder="如 button.btn-refresh">
+        <div class="hint">仅自动刷新验证码，不点击提交</div>
+      </div>
+    </div>
+    <div id="imageFields" style="display:none">
+      <div class="field">
+        <label>图片选择器</label>
+        <input type="text" id="imgSelector" placeholder="如 img[src*='captcha']">
+      </div>
+      <div class="field">
+        <label>输入框选择器</label>
+        <input type="text" id="imageInputSelector" placeholder="如 #captcha">
+      </div>
+      <div class="hint">图片模式使用本地 onnx 模型识别，也可右键图片标记</div>
+    </div>
+    <div class="row">
+      <button id="testBtn">测试选择器</button>
+      <button id="saveBtn">保存配置</button>
+    </div>
+  </section>
+
+  <button id="clearCfgBtn">清除本站配置</button>
+
+  <hr>
+
+  <div class="group-title">失败样本（图片验证码）</div>
   <div id="count">加载中…</div>
-  <button id="exportBtn">导出 ZIP</button>
-  <button id="clearBtn">清空</button>
+  <div class="row">
+    <button id="exportBtn">导出 ZIP</button>
+    <button id="clearFailsBtn">清空</button>
+  </div>
   <div id="status"></div>
   <script src="popup.js"></script>
 </body>

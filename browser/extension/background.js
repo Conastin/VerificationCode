@@ -1,7 +1,7 @@
-/* Background service worker: right-click menu on any image to mark it as a
- * CAPTCHA. After the content script stores the config and asks for a reload,
- * the page refreshes and auto-fill kicks in from the persisted config.
- * Also owns the fail-sample store (IndexedDB): content scripts report failed
+/* Background service worker: right-click menu "配置本站验证码" tells the
+ * content script to open the visual config bar; the config it saves is
+ * picked up by the content script via chrome.storage.onChanged. Also owns
+ * the fail-sample store (IndexedDB): content scripts report failed
  * recognitions/submits, the popup triggers ZIP export / clearing.
  */
 "use strict";
@@ -21,9 +21,9 @@ const CONTENT_FILES = [
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
-      id: "mark-captcha",
-      title: "标记为验证码并自动填充",
-      contexts: ["image"],
+      id: "config-captcha",
+      title: "配置本站验证码",
+      contexts: ["page"],
     });
   });
 });
@@ -41,27 +41,26 @@ async function ensureContentScript(tabId) {
   }
 }
 
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId !== "mark-captcha" || !tab?.id) return;
+async function sendToTab(tabId, message) {
   try {
-    await chrome.tabs.sendMessage(tab.id, { type: "markCaptcha", srcUrl: info.srcUrl });
+    return await chrome.tabs.sendMessage(tabId, message);
   } catch {
     // content script not present (page opened before install) -> inject + retry
-    await ensureContentScript(tab.id);
-    try {
-      await chrome.tabs.sendMessage(tab.id, { type: "markCaptcha", srcUrl: info.srcUrl });
-    } catch (err) {
-      console.error("[captcha-autofill] mark failed:", err);
-    }
+    await ensureContentScript(tabId);
+    return await chrome.tabs.sendMessage(tabId, message);
+  }
+}
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId !== "config-captcha" || !tab?.id) return;
+  try {
+    await sendToTab(tab.id, { type: "startConfig" });
+  } catch (err) {
+    console.error("[captcha-autofill] startConfig failed:", err);
   }
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message?.type === "marked") {
-    // Content script stored the config; reload so auto-fill runs fresh.
-    chrome.tabs.reload(sender.tab.id);
-    return;
-  }
   const handle = {
     saveFailSample: () => storeFailSample({
       ...message,
