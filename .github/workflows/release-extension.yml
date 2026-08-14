@@ -50,26 +50,38 @@ jobs:
         run: |
           PREV_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || true)
           if [ -n "$PREV_TAG" ]; then
-            LOG=$(git log --oneline "$PREV_TAG"..HEAD)
+            LOG=$(git log --format='%h %s' "$PREV_TAG"..HEAD)
           else
-            LOG=$(git log --oneline -15)
+            LOG=$(git log --format='%h %s' -15)
           fi
-          NOTES=$(cat <<NOTES_BODY
-          ## 安装说明
+          # 按 Conventional Commits 前缀分组（空组不输出）
+          sec() {  # $1=组标题, $2=提交行
+            if [ -n "$2" ]; then
+              printf '\n### %s\n%s\n' "$1" "$2"
+            fi
+          }
+          P='^[0-9a-f]{7} '
+          FEAT=$(printf '%s\n' "$LOG" | grep -E "${P}(feat|feature)(\(|:)" || true)
+          FIX=$(printf '%s\n' "$LOG" | grep -E "${P}(fix|bug|bugfix)(\(|:)" || true)
+          PERF=$(printf '%s\n' "$LOG" | grep -E "${P}perf(\(|:)" || true)
+          REFACTOR=$(printf '%s\n' "$LOG" | grep -E "${P}refactor(\(|:)" || true)
+          TEST=$(printf '%s\n' "$LOG" | grep -E "${P}test(\(|:)" || true)
+          DOCS=$(printf '%s\n' "$LOG" | grep -E "${P}(docs|doc)(\(|:)" || true)
+          CI=$(printf '%s\n' "$LOG" | grep -E "${P}(ci|chore|build)(\(|:)" || true)
+          OTHER=$(printf '%s\n' "$LOG" | grep -vE "${P}(feat|feature|fix|bug|bugfix|perf|refactor|test|docs|doc|ci|chore|build)(\(|:)" || true)
+          NOTES="## 安装说明
 
-          1. 下载本 Release 资产 `verification-code-extension-v${{ steps.version.outputs.version }}.zip`
-          2. 解压到任意目录
-          3. `chrome://extensions` → 开发者模式 → 加载已解压的扩展程序 → 选择解压目录
+1. 下载本 Release 资产 \`verification-code-extension-v${{ steps.version.outputs.version }}.zip\`
+2. 解压到任意目录
+3. \`chrome://extensions\` → 开发者模式 → 加载已解压的扩展程序 → 选择解压目录
 
-          ## 更新内容
-
-          ```text
-          $LOG
-          ```
-          NOTES_BODY
-          )
-          # 去掉 YAML 缩进（10 空格），保持 Markdown 干净
-          NOTES=$(printf '%s\n' "$NOTES" | sed 's/^ \{10\}//')
+## 更新内容
+"
+          NOTES="$NOTES$(sec '🚀 新功能' "$FEAT")$(sec '🐛 修复' "$FIX")$(sec '⚡ 性能' "$PERF")$(sec '♻️ 重构' "$REFACTOR")$(sec '🧪 测试' "$TEST")$(sec '📝 文档' "$DOCS")$(sec '🔧 构建/维护' "$CI")$(sec '📦 其他' "$OTHER")"
+          if [ -z "$FEAT$FIX$PERF$REFACTOR$TEST$DOCS$CI$OTHER" ]; then
+            NOTES="$NOTES
+（无提交记录）"
+          fi
           {
             echo "notes<<NOTES_EOF"
             echo "$NOTES"
