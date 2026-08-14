@@ -24,6 +24,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          # 完整历史+全部 tag: release notes 需要 git log <prev_tag>..HEAD
+          fetch-depth: 0
 
       - name: Read version from manifest
         id: version
