@@ -10,6 +10,7 @@ Usage:
         --out data/real_captcha --checkpoint checkpoints/best.pt
 """
 
+import os
 from __future__ import annotations
 
 import argparse
@@ -28,7 +29,7 @@ from PIL import Image
 from .model import DEFAULT_CHARSET
 from .model import build_model_from_checkpoint, decode_logits
 
-DEFAULT_URL = "https://old.example.internal/fort/pages/commons/image.jsp"
+DEFAULT_URL = os.environ.get("OLD_SITE_BASE", "https://old.example.internal") + "/fort/pages/commons/image.jsp"
 
 
 def build_parser() -> argparse.ArgumentParser:

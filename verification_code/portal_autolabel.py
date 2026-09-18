@@ -19,6 +19,7 @@ Usage:
     python -m verification_code.portal_autolabel --count 400 --interval 2.2
 """
 
+import os
 from __future__ import annotations
 
 import argparse
@@ -47,8 +48,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--interval", type=float, default=2.2)
     parser.add_argument("--checkpoint", type=Path,
                         default=Path("checkpoints/universal_crnn_ft_portal.pt"))
-    parser.add_argument("--user", default="testuser01")
-    parser.add_argument("--password", default="Test123456!")
+    parser.add_argument("--user", default=os.environ.get("PORTAL_USER", "testuser01"))
+    parser.add_argument("--password", default=os.environ.get("PORTAL_PASSWORD", ""))
     parser.add_argument("--seed", type=int, default=None)
     return parser
 

@@ -1,0 +1,18 @@
+{
+  "lt_first": "LT-14009-BfR91db70NRswJxWrtU1UCxdrfdT5o",
+  "lt_second": "LT-14010-Zrk9zcpLIsoP1A9gYiTixhrAhF4ZFL",
+  "lt_changes_per_pageload": true,
+  "same_key_refresh_unique_hashes": true,
+  "same_key_refresh_hashes": [
+    "516c28164743",
+    "1372144443f6",
+    "5f7deda102d6",
+    "2606aa9db20e",
+    "00a9a1ab54e5"
+  ],
+  "cookies": {
+    "JSESSIONID": "6311BCF2B266D08AC438C8EAD8E29EA4"
+  },
+  "key": "LT-14010-Zrk9zcpLIsoP1A9gYiTixhrAhF4ZFL_KEY",
+  "pure_http_ok": true
+}

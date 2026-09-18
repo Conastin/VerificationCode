@@ -32,7 +32,8 @@ from PIL import Image
 
 from .train_universal import (CrnnCaptcha, ctc_greedy, preprocess, set_img_h)
 
-BASE = "https://portal.example.com"
+import os
+BASE = os.environ.get("PORTAL_BASE", "https://portal.example.com")
 # dynamic markers only; page-fixed JS template strings (e.g. 人脸认证失败)
 # must NOT be used - the verdict comes exclusively from the #msg div that the
 # server injects into the POST /login response HTML.
@@ -47,8 +48,8 @@ def build_parser() -> argparse.ArgumentParser:
                         default=Path("checkpoints/universal_crnn_ft_portal.pt"))
     parser.add_argument("--attempts", type=int, default=60)
     parser.add_argument("--interval", type=float, default=2.5)
-    parser.add_argument("--user", default="testuser01")
-    parser.add_argument("--password", default="Test123456!")
+    parser.add_argument("--user", default=os.environ.get("PORTAL_USER", "testuser01"))
+    parser.add_argument("--password", default=os.environ.get("PORTAL_PASSWORD", ""))
     parser.add_argument("--fold-case", action="store_true", default=False,
                         help="submit predictions uppercased (default: as-is)")
     parser.add_argument("--out", type=Path, default=Path("reports/portal_login_validation.csv"))

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """扩展 v3.0.0 E2E 实测: persistent-context Edge + 扩展, 双站自动填充验证."""
+import os
 import shutil
 import sys
 import time
@@ -56,16 +57,16 @@ def main() -> int:
                       wait_until="domcontentloaded")
         ext_page.evaluate(
             """([origin, cfg]) => chrome.storage.local.set({ [origin]: cfg })""",
-            ["https://portal.example.com", PORTAL_CFG])
+            [os.environ.get("PORTAL_BASE", "https://portal.example.com"), PORTAL_CFG])
         ext_page.evaluate(
             """([origin, cfg]) => chrome.storage.local.set({ [origin]: cfg })""",
-            ["https://old.example.internal", OLD_CFG])
+            [os.environ.get("OLD_SITE_BASE", "https://old.example.internal"), OLD_CFG])
         ext_page.close()
 
         results = {}
         # portal
         page = context.new_page()
-        page.goto("https://portal.example.com/login",
+        page.goto(os.environ.get("PORTAL_BASE", "https://portal.example.com") + "/login",
                   wait_until="domcontentloaded", timeout=60000)
         page.wait_for_timeout(2500)
         page.fill("#username_show", "testuser01")
@@ -84,7 +85,7 @@ def main() -> int:
 
         # old site
         page = context.new_page()
-        page.goto("https://old.example.internal/fort/pages/login.jsp",
+        page.goto(os.environ.get("OLD_SITE_BASE", "https://old.example.internal") + "/fort/pages/login.jsp",
                   wait_until="domcontentloaded", timeout=60000)
         page.wait_for_timeout(2500)
         filled = ""

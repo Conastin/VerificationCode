@@ -1,0 +1,202 @@
+[
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/login",
+    "status": 200,
+    "type": "document",
+    "content_type": "text/html;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/formStyle/font-awesome.css",
+    "status": 200,
+    "type": "stylesheet",
+    "content_type": "text/css;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/jquery-easyui/themes/bootstrap/easyui.css",
+    "status": 200,
+    "type": "stylesheet",
+    "content_type": "text/css;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/formStyle/styleCss_1.css",
+    "status": 200,
+    "type": "stylesheet",
+    "content_type": "text/css;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/css/jquery-ui.css",
+    "status": 200,
+    "type": "stylesheet",
+    "content_type": "text/css;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/jquery-easyui/themes/icon.css",
+    "status": 200,
+    "type": "stylesheet",
+    "content_type": "text/css;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/formStyle/newLogin.css",
+    "status": 200,
+    "type": "stylesheet",
+    "content_type": "text/css;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/base64/base64.js",
+    "status": 200,
+    "type": "script",
+    "content_type": "application/javascript;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/bootstrap/bootstrap.min.js",
+    "status": 200,
+    "type": "script",
+    "content_type": "application/javascript;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/jquery-migrate-1.4.1.min.js",
+    "status": 200,
+    "type": "script",
+    "content_type": "application/javascript;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/jquery-1.7.2.min.js",
+    "status": 200,
+    "type": "script",
+    "content_type": "application/javascript;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/common.js",
+    "status": 200,
+    "type": "script",
+    "content_type": "application/javascript;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/logo/l-logo.png",
+    "status": 200,
+    "type": "image",
+    "content_type": "image/png;charset=UTF-8",
+    "body_len": 42229
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/jquery-easyui/jquery.easyui.min.js",
+    "status": 200,
+    "type": "script",
+    "content_type": "application/javascript;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/image/getRandcode/LT-14008-glPRcWbthZjpMOimfVkGMUhR4Tm9IE_KEY",
+    "status": 200,
+    "type": "image",
+    "content_type": "image/jpeg;charset=UTF-8",
+    "body_len": 2059
+  },
+  {
+    "method": "GET",
+    "url": "https://rescdn.qqmail.com/node/ww/wwopenmng/js/sso/wwLogin-1.0.0.js",
+    "status": 200,
+    "type": "script",
+    "content_type": "application/x-javascript",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/images/eqWeChat.jpg",
+    "status": 200,
+    "type": "image",
+    "content_type": "image/jpeg;charset=UTF-8",
+    "body_len": 21420
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/images/l-left-bg.png",
+    "status": 200,
+    "type": "image",
+    "content_type": "image/png;charset=UTF-8",
+    "body_len": 86558
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/images/eacPassIcon.png",
+    "status": 200,
+    "type": "image",
+    "content_type": "image/png;charset=UTF-8",
+    "body_len": 1412
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/images/eacEmilIcon.png",
+    "status": 200,
+    "type": "image",
+    "content_type": "image/png;charset=UTF-8",
+    "body_len": 1409
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/images/logoBg.jpg",
+    "status": 200,
+    "type": "image",
+    "content_type": "image/jpeg;charset=UTF-8",
+    "body_len": 5153960
+  },
+  {
+    "method": "POST",
+    "url": "https://portal.example.com/service/api/v1/authType/checkRandomCodeRequired",
+    "status": 200,
+    "type": "xhr",
+    "content_type": "application/json;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/fonts/fontawesome-webfont.woff2?v=4.7.0",
+    "status": 200,
+    "type": "font",
+    "content_type": "font/woff2;charset=UTF-8",
+    "body_len": -1
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/image/getRandcode/LT-14008-glPRcWbthZjpMOimfVkGMUhR4Tm9IE_KEY",
+    "status": 200,
+    "type": "fetch",
+    "content_type": "image/jpeg;charset=UTF-8",
+    "body_len": 0
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/image/getRandcode/LT-14008-glPRcWbthZjpMOimfVkGMUhR4Tm9IE_KEY?d=0.84365295052746",
+    "status": 200,
+    "type": "image",
+    "content_type": "image/jpeg;charset=UTF-8",
+    "body_len": 1997
+  }
+]

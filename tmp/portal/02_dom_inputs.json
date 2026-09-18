@@ -1,0 +1,353 @@
+[
+  {
+    "tag": "input",
+    "type": "checkbox",
+    "placeholder": null,
+    "name": null,
+    "id": "sideToggle",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "img",
+    "type": null,
+    "placeholder": null,
+    "name": null,
+    "id": "",
+    "cls": "",
+    "visible": true
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "eid",
+    "id": "eid",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "isShowRandomCode",
+    "id": "isShowRandomCode",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "keyCacheCode",
+    "id": "keyCacheCode",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "lt",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "execution",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "_eventId",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "authType",
+    "id": "authType",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "cert",
+    "id": "cert",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "csrfToken",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "username",
+    "id": "username",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "password",
+    "id": "password",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "text",
+    "placeholder": "用户名",
+    "name": null,
+    "id": "username_show",
+    "cls": "",
+    "visible": true
+  },
+  {
+    "tag": "input",
+    "type": "password",
+    "placeholder": "密码",
+    "name": null,
+    "id": "password_show",
+    "cls": "",
+    "visible": true
+  },
+  {
+    "tag": "input",
+    "type": "password",
+    "placeholder": "AD密码",
+    "name": "adPasswd",
+    "id": "adPassword",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "password",
+    "placeholder": "LADP密码",
+    "name": "ldapPasswd",
+    "id": "ldapPassword",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "text",
+    "placeholder": "OTP码",
+    "name": "otpCode",
+    "id": "otpCode",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "text",
+    "placeholder": "短信认证码",
+    "name": "smsCode",
+    "id": "smsCode",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "button",
+    "type": "button",
+    "placeholder": null,
+    "name": null,
+    "id": "getSmsCode",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "text",
+    "placeholder": "验证码",
+    "name": "randomCode",
+    "id": "randomCode",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "img",
+    "type": null,
+    "placeholder": null,
+    "name": null,
+    "id": "codeImg",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "img",
+    "type": null,
+    "placeholder": null,
+    "name": null,
+    "id": "",
+    "cls": "loginTxt",
+    "visible": true
+  },
+  {
+    "tag": "input",
+    "type": "button",
+    "placeholder": null,
+    "name": null,
+    "id": "",
+    "cls": "loginBg-btn",
+    "visible": true
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "eid",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "vid",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "username",
+    "id": "f2userName",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "password",
+    "id": "f2paramPwd",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "keyCacheCode",
+    "id": "f2paramKeyCode",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "lt",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "qrCodeLoginTicket",
+    "id": "qrCodeLt",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "execution",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "imageAuth",
+    "id": "f2paramImageAuth",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "_eventId",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "authType",
+    "id": "qrCodeAuthType",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "registerEid",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "isShowRandomCode",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "csrfToken",
+    "id": "",
+    "cls": "",
+    "visible": false
+  },
+  {
+    "tag": "input",
+    "type": "hidden",
+    "placeholder": null,
+    "name": "csrfToken",
+    "id": "",
+    "cls": "",
+    "visible": false
+  }
+]

@@ -14,3 +14,8 @@ checkpoints/*
 # 日志与临时文件
 *.log
 *_tmp.*
+
+# 本地真实目标配置（脱敏历史后不入库）
+.env.local
+LOCAL_SECRETS.md
+tmp/pubrepo/

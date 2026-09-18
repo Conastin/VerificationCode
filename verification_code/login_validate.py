@@ -14,6 +14,7 @@ Usage:
         --attempts 50 --checkpoint checkpoints/best.pt
 """
 
+import os
 from __future__ import annotations
 
 import argparse
@@ -34,7 +35,7 @@ from PIL import Image
 
 from .model import build_model_from_checkpoint, decode_logits
 
-BASE = "https://old.example.internal"
+BASE = os.environ.get("OLD_SITE_BASE", "https://old.example.internal")
 # Dynamic rejection markers only; page-fixed labels like "图形验证码" (input
 # placeholder) and "获取图形验证码" must NOT be used as rejection signals.
 REJECT_MARKERS = ("验证码不正确", "验证码错误，请重新输入", "验证码已失效")

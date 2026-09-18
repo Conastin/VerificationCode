@@ -19,6 +19,7 @@ Usage:
 Then open http://localhost:8765 in a browser.
 """
 
+import os
 from __future__ import annotations
 
 import argparse
@@ -147,8 +148,8 @@ def worker(model, device, stop_evt: threading.Event, interval: float) -> None:
             data = fetch_captcha(opener, page["lt"])
             pred, conf, top3 = recognize_full(model, data, device)
             if conf >= AUTO_TH:
-                _, resp = submit_login(opener, page, "testuser01",
-                                       "Test123456!", pred)
+                _, resp = submit_login(opener, page, os.environ.get("PORTAL_USER", "testuser01"),
+                                       os.environ.get("PORTAL_PASSWORD", ""), pred)
                 verdict, _ = classify(resp)
                 with STATS_LOCK:
                     if verdict == "captcha_ok":
@@ -296,7 +297,8 @@ def make_handler(model, device):
                     self._json({"verdict": "expired", "hint": "队列中已无此项"})
                     return
                 _, resp = submit_login(target.opener, target.page,
-                                       "testuser01", "Test123456!", req["code"])
+                                       os.environ.get("PORTAL_USER", "testuser01"),
+                                       os.environ.get("PORTAL_PASSWORD", ""), req["code"])
                 verdict, hint = classify(resp)
                 with STATS_LOCK:
                     if verdict == "captcha_ok":

@@ -1,0 +1,128 @@
+[
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/login",
+    "status": 200,
+    "type": "document"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/formStyle/font-awesome.css",
+    "status": 200,
+    "type": "stylesheet"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/formStyle/newLogin.css",
+    "status": 200,
+    "type": "stylesheet"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/css/jquery-ui.css",
+    "status": 200,
+    "type": "stylesheet"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/jquery-easyui/themes/bootstrap/easyui.css",
+    "status": 200,
+    "type": "stylesheet"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/formStyle/styleCss_1.css",
+    "status": 200,
+    "type": "stylesheet"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/jquery-easyui/themes/icon.css",
+    "status": 200,
+    "type": "stylesheet"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/base64/base64.js",
+    "status": 200,
+    "type": "script"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/jquery-migrate-1.4.1.min.js",
+    "status": 200,
+    "type": "script"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/bootstrap/bootstrap.min.js",
+    "status": 200,
+    "type": "script"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/logo/l-logo.png",
+    "status": 200,
+    "type": "image"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/common.js",
+    "status": 200,
+    "type": "script"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/jquery-1.7.2.min.js",
+    "status": 200,
+    "type": "script"
+  },
+  {
+    "method": "GET",
+    "url": "https://rescdn.qqmail.com/node/ww/wwopenmng/js/sso/wwLogin-1.0.0.js",
+    "status": 200,
+    "type": "script"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/static/js/jquery-easyui/jquery.easyui.min.js",
+    "status": 200,
+    "type": "script"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/image/getRandcode/LT-14000-zvgWTj6zSxOflRlEKFGo1zNZGoDuj6_KEY",
+    "status": 200,
+    "type": "image"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/images/eqWeChat.jpg",
+    "status": 200,
+    "type": "image"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/images/logoBg.jpg",
+    "status": 200,
+    "type": "image"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/images/eacPassIcon.png",
+    "status": 200,
+    "type": "image"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/images/l-left-bg.png",
+    "status": 200,
+    "type": "image"
+  },
+  {
+    "method": "GET",
+    "url": "https://portal.example.com/newLogin/images/eacEmilIcon.png",
+    "status": 200,
+    "type": "image"
+  }
+]

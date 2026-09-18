@@ -12,7 +12,8 @@ import urllib.request
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[2] / "data" / "portal_raw"
-BASE = "https://portal.example.com"
+import os
+BASE = os.environ.get("PORTAL_BASE", "https://portal.example.com")
 COUNT = int(sys.argv[1]) if len(sys.argv) > 1 else 150
 
 
