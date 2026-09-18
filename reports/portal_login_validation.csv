@@ -1,0 +1,61 @@
+attempt,predicted,confidence,verdict,hint
+1,V4B0,0.9993,unknown,用户不存在
+2,F3CT,0.9985,unknown,用户不存在
+3,7EXM,0.9465,unknown,用户不存在
+4,EUM,0.9709,captcha_wrong,验证码输入错误 请您重新输入!
+5,YJH6,0.9438,captcha_wrong,验证码输入错误 请您重新输入!
+6,ARQ7,0.9996,unknown,用户不存在
+7,QAY0,0.8708,captcha_wrong,验证码输入错误 请您重新输入!
+8,NACD,0.7772,captcha_wrong,验证码输入错误 请您重新输入!
+9,ZKII,0.9737,unknown,用户不存在
+10,P26Y,0.9993,unknown,用户不存在
+11,MZD9,0.9995,unknown,用户不存在
+12,IHU9,0.993,unknown,用户不存在
+13,9K4Q,0.9996,unknown,用户不存在
+14,AQWK,0.8827,captcha_wrong,验证码输入错误 请您重新输入!
+15,G0D1,0.9497,unknown,用户不存在
+16,YGS6,0.9994,unknown,用户不存在
+17,8SF9,0.9996,unknown,用户不存在
+18,OCO3,0.9671,unknown,用户不存在
+19,FVFY,0.9574,unknown,用户不存在
+20,UJEX,0.9861,unknown,用户不存在
+21,IL96,0.8805,unknown,用户不存在
+22,KGD9,0.9969,unknown,用户不存在
+23,HVRA,0.7931,captcha_wrong,验证码输入错误 请您重新输入!
+24,W8CZ,0.9329,captcha_wrong,验证码输入错误 请您重新输入!
+25,IY8V,0.9727,unknown,用户不存在
+26,4OXS,0.9995,unknown,用户不存在
+27,02Y3,0.9996,unknown,用户不存在
+28,Q4QN,0.8819,captcha_wrong,验证码输入错误 请您重新输入!
+29,IDB3,0.9806,captcha_wrong,验证码输入错误 请您重新输入!
+30,3O67,0.9453,unknown,用户不存在
+31,6M24,0.9108,unknown,用户不存在
+32,YPN,0.9847,captcha_wrong,验证码输入错误 请您重新输入!
+33,1RUW,0.9991,unknown,用户不存在
+34,7XGA,0.9919,unknown,用户不存在
+35,J7FY,0.9998,unknown,用户不存在
+36,LNM6,0.9555,captcha_wrong,验证码输入错误 请您重新输入!
+37,ZXWH,0.8755,unknown,用户不存在
+38,8DLH,0.999,unknown,用户不存在
+39,Z7UR,0.9993,unknown,用户不存在
+40,ENL5,0.9808,unknown,用户不存在
+41,NIEE,0.8463,captcha_wrong,验证码输入错误 请您重新输入!
+42,3YVC,0.9996,unknown,用户不存在
+43,U8JL,0.9399,unknown,用户不存在
+44,SIG5,0.9976,unknown,用户不存在
+45,EJIG,0.9938,unknown,用户不存在
+46,1F0E,0.9976,unknown,用户不存在
+47,TBUT,0.8865,unknown,用户不存在
+48,UB2P,0.9861,unknown,用户不存在
+49,XJNA,0.9906,unknown,用户不存在
+50,273J,0.9993,unknown,用户不存在
+51,48HI,0.9505,unknown,用户不存在
+52,UC2L,0.7859,captcha_wrong,验证码输入错误 请您重新输入!
+53,6P7K,0.9879,unknown,用户不存在
+54,H1BU,0.984,unknown,用户不存在
+55,WYTO,0.7943,unknown,用户不存在
+56,PQM1,0.742,unknown,用户不存在
+57,ANSL,0.987,unknown,用户不存在
+58,J3LP,0.9969,unknown,用户不存在
+59,GODG,0.9995,unknown,用户不存在
+60,GSC3,0.9987,unknown,用户不存在

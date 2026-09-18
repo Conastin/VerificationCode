@@ -1,0 +1,61 @@
+attempt,predicted,confidence,verdict,hint
+1,GQH9,0.9955,captcha_ok,用户不存在
+2,FIDH,0.9748,captcha_ok,用户不存在
+3,YVDP,0.9972,captcha_ok,用户不存在
+4,CLRG,0.997,captcha_ok,用户不存在
+5,IWKT,0.9981,captcha_ok,用户不存在
+6,T160,0.9948,captcha_ok,用户不存在
+7,XMNE,0.8949,captcha_ok,用户不存在
+8,TGUC,0.989,captcha_ok,用户不存在
+9,FM41,0.9648,captcha_ok,用户不存在
+10,A24G,0.9991,captcha_ok,用户不存在
+11,265G,0.9989,captcha_ok,用户不存在
+12,UVXE,0.9994,captcha_ok,用户不存在
+13,M55C,0.919,captcha_ok,用户不存在
+14,HD16,0.9762,captcha_ok,用户不存在
+15,S5KX,0.9998,captcha_ok,用户不存在
+16,5RAT,0.9995,captcha_ok,用户不存在
+17,TYMX,0.9638,captcha_ok,用户不存在
+18,W2PH,0.9986,captcha_ok,用户不存在
+19,P46N,0.9987,captcha_ok,用户不存在
+20,3FGA,0.9965,captcha_ok,用户不存在
+21,B9A5,0.9913,captcha_ok,用户不存在
+22,YEG8,0.9988,captcha_ok,用户不存在
+23,VZ0N,0.9669,captcha_ok,用户不存在
+24,YZB0,0.9148,captcha_ok,用户不存在
+25,TVHA,0.9866,captcha_ok,用户不存在
+26,P8LI,0.8469,captcha_ok,用户不存在
+27,NAZT,0.9969,captcha_ok,用户不存在
+28,RNOD,0.9172,captcha_ok,用户不存在
+29,POMZ,0.9439,captcha_ok,用户不存在
+30,NY3A,0.9853,captcha_ok,用户不存在
+31,LJOI,0.8988,captcha_ok,用户不存在
+32,OXNC,0.984,captcha_ok,用户不存在
+33,CZG6,0.9758,captcha_ok,用户不存在
+34,TPOWW,0.9116,captcha_wrong,验证码输入错误 请您重新输入!
+35,TLUG,0.9994,captcha_ok,用户不存在
+36,LWN2,0.9666,captcha_ok,用户不存在
+37,VWES,0.9949,captcha_ok,用户不存在
+38,KFYN,0.9996,captcha_ok,用户不存在
+39,S15Q,0.9923,captcha_ok,用户不存在
+40,HI8V,0.9902,captcha_ok,用户不存在
+41,1DU0,0.997,captcha_ok,用户不存在
+42,KWLF,0.9588,captcha_ok,用户不存在
+43,X0QP,0.8906,captcha_ok,用户不存在
+44,XNUS,0.9802,captcha_ok,用户不存在
+45,MBBD,0.9499,captcha_wrong,验证码输入错误 请您重新输入!
+46,3WAB,0.996,captcha_ok,用户不存在
+47,QO90,0.9681,captcha_ok,用户不存在
+48,5B8V,0.9988,captcha_ok,用户不存在
+49,XQ5W,0.9672,captcha_ok,用户不存在
+50,F4KQ,0.933,captcha_ok,用户不存在
+51,PNF4,0.999,captcha_ok,用户不存在
+52,IGFF,0.8778,captcha_wrong,验证码输入错误 请您重新输入!
+53,JMFD,0.9434,captcha_wrong,验证码输入错误 请您重新输入!
+54,LX1O,0.9964,captcha_ok,用户不存在
+55,L9MD,0.8725,captcha_wrong,验证码输入错误 请您重新输入!
+56,NCUC,0.9988,captcha_ok,用户不存在
+57,82ZB,0.9997,captcha_ok,用户不存在
+58,97JW,0.9921,captcha_ok,用户不存在
+59,0FEL,0.9968,captcha_ok,用户不存在
+60,84VQ,0.9905,captcha_ok,用户不存在

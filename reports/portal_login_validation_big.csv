@@ -1,0 +1,61 @@
+attempt,predicted,confidence,verdict,hint
+1,EXYX,0.9971,captcha_ok,用户不存在
+2,BVCI,0.971,captcha_ok,用户不存在
+3,IML,0.988,captcha_wrong,验证码输入错误 请您重新输入!
+4,B7LU,0.885,captcha_ok,用户不存在
+5,5AJH,0.9531,captcha_ok,用户不存在
+6,GD9A,0.9885,captcha_ok,用户不存在
+7,FH2K,0.978,captcha_ok,用户不存在
+8,O6V7,0.9973,captcha_ok,用户不存在
+9,YSU6,0.9993,captcha_ok,用户不存在
+10,BLFI,0.9786,captcha_ok,用户不存在
+11,G1MK,0.9756,captcha_ok,用户不存在
+12,WASZ,0.9821,captcha_ok,用户不存在
+13,Z4TR,0.903,captcha_wrong,验证码输入错误 请您重新输入!
+14,GPK7,0.8991,captcha_ok,用户不存在
+15,RQXB,0.9868,captcha_ok,用户不存在
+16,1FZ3,0.9994,captcha_ok,用户不存在
+17,A3BH,0.9988,captcha_ok,用户不存在
+18,PN92,0.999,captcha_ok,用户不存在
+19,UZP3,0.9994,captcha_ok,用户不存在
+20,2KPS,0.9993,captcha_ok,用户不存在
+21,QTCB,0.9603,captcha_ok,用户不存在
+22,SRCE,0.9989,captcha_ok,用户不存在
+23,JLJ0,0.9972,captcha_ok,用户不存在
+24,RR03,0.9985,captcha_ok,用户不存在
+25,QXS0,0.983,captcha_ok,用户不存在
+26,3GH9,0.999,captcha_ok,用户不存在
+27,BJY3,0.9982,captcha_ok,用户不存在
+28,VRL2,0.9948,captcha_ok,用户不存在
+29,7IJ3,0.9981,captcha_ok,用户不存在
+30,DG9EL,0.838,captcha_wrong,验证码输入错误 请您重新输入!
+31,RV6D,0.9991,captcha_ok,用户不存在
+32,TYET,0.9922,captcha_ok,用户不存在
+33,CYK5,0.9063,captcha_ok,用户不存在
+34,W32W,0.95,captcha_ok,用户不存在
+35,EQ46,0.9981,captcha_ok,用户不存在
+36,KVQT,0.9986,captcha_ok,用户不存在
+37,YQYN,0.9971,captcha_ok,用户不存在
+38,828M,0.9988,captcha_ok,用户不存在
+39,KP7L,0.9993,captcha_ok,用户不存在
+40,5C75,0.9991,captcha_ok,用户不存在
+41,OBRA,0.9972,captcha_ok,用户不存在
+42,RR39,0.999,captcha_ok,用户不存在
+43,3XNA,0.9988,captcha_ok,用户不存在
+44,TUWD,0.9066,captcha_wrong,验证码输入错误 请您重新输入!
+45,VW9Z,0.928,captcha_ok,用户不存在
+46,104Q,0.989,captcha_ok,用户不存在
+47,B9CW,0.9931,captcha_ok,用户不存在
+48,CNH5,0.9928,captcha_ok,用户不存在
+49,38CT,0.99,captcha_ok,用户不存在
+50,OLFV,0.995,captcha_ok,用户不存在
+51,CVC9,0.9956,captcha_ok,用户不存在
+52,KK7RB,0.9443,captcha_wrong,验证码输入错误 请您重新输入!
+53,7K5L,0.9418,captcha_ok,用户不存在
+54,6SVZ,0.9988,captcha_ok,用户不存在
+55,5RWJ,0.9864,captcha_ok,用户不存在
+56,P709,0.9991,captcha_ok,用户不存在
+57,DE8B,0.9991,captcha_ok,用户不存在
+58,W6P8,0.9977,captcha_ok,用户不存在
+59,14XG,0.9976,captcha_ok,用户不存在
+60,DXBT,0.9981,captcha_ok,用户不存在

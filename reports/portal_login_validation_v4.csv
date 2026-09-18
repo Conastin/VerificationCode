@@ -1,0 +1,61 @@
+attempt,predicted,confidence,verdict,hint
+1,ZPLA,0.9987,captcha_ok,用户不存在
+2,K127,0.9657,captcha_ok,用户不存在
+3,VZ26,0.9998,captcha_ok,用户不存在
+4,5X24,0.9991,captcha_ok,用户不存在
+5,MA9V,0.9953,captcha_ok,用户不存在
+6,54WU,0.9993,captcha_ok,用户不存在
+7,BKN3,0.9414,captcha_ok,用户不存在
+8,5DQE,0.9587,captcha_ok,用户不存在
+9,B529,0.9998,captcha_ok,用户不存在
+10,ZPRJ,0.9508,captcha_ok,用户不存在
+11,Z0GI,0.8743,captcha_ok,用户不存在
+12,ZU3A,0.9962,captcha_ok,用户不存在
+13,ZP86,0.9985,captcha_ok,用户不存在
+14,AUED,0.8877,captcha_ok,用户不存在
+15,6OF2,0.9984,captcha_ok,用户不存在
+16,DFC7,0.9995,captcha_ok,用户不存在
+17,0YNU,0.959,captcha_ok,用户不存在
+18,W162,0.9622,captcha_ok,用户不存在
+19,C2DS,0.9976,captcha_ok,用户不存在
+20,U0PU,0.9013,captcha_ok,用户不存在
+21,MQ8G,0.976,captcha_ok,用户不存在
+22,HU7D,0.9278,captcha_ok,用户不存在
+23,DVKL,0.9831,captcha_ok,用户不存在
+24,DJT3,0.8832,captcha_wrong,验证码输入错误 请您重新输入!
+25,1AWE,0.8746,captcha_wrong,验证码输入错误 请您重新输入!
+26,Z8KG,0.9985,captcha_ok,用户不存在
+27,CCRR,0.9986,captcha_ok,用户不存在
+28,PLRX,0.9999,captcha_ok,用户不存在
+29,5V5Z,0.9995,captcha_ok,用户不存在
+30,RJ0B,0.9435,captcha_ok,用户不存在
+31,KQKM,0.996,captcha_ok,用户不存在
+32,55GY,0.9961,captcha_ok,用户不存在
+33,C5X9,0.9955,captcha_ok,用户不存在
+34,09XH,0.9923,captcha_ok,用户不存在
+35,63CN,0.9994,captcha_ok,用户不存在
+36,QZFZ,0.9296,captcha_ok,用户不存在
+37,5EZO,0.9567,captcha_ok,用户不存在
+38,0ECM,0.9927,captcha_ok,用户不存在
+39,MTPM,0.9519,captcha_ok,用户不存在
+40,6N26,0.9997,captcha_ok,用户不存在
+41,M0L5,0.9589,captcha_ok,用户不存在
+42,LF4H,0.9997,captcha_ok,用户不存在
+43,HQ1Q,0.956,captcha_wrong,验证码输入错误 请您重新输入!
+44,1H44,0.993,captcha_ok,用户不存在
+45,84GP,0.9994,captcha_ok,用户不存在
+46,WVT9,0.8309,captcha_ok,用户不存在
+47,UQAK,0.906,captcha_ok,用户不存在
+48,J2QR,0.9632,captcha_ok,用户不存在
+49,RJSS,0.9976,captcha_ok,用户不存在
+50,VOTP,0.9948,captcha_ok,用户不存在
+51,7SW,0.9987,captcha_wrong,验证码输入错误 请您重新输入!
+52,FPJQ,0.9976,captcha_ok,用户不存在
+53,MXDH,0.949,captcha_ok,用户不存在
+54,J7W2,0.9659,captcha_ok,用户不存在
+55,KN34,0.9868,captcha_ok,用户不存在
+56,PMDX,0.9952,captcha_wrong,验证码输入错误 请您重新输入!
+57,3448,0.9996,captcha_ok,用户不存在
+58,QSGK,0.9862,captcha_ok,用户不存在
+59,WO29,0.9417,captcha_ok,用户不存在
+60,GNA3,0.9889,captcha_ok,用户不存在

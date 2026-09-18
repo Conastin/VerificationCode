@@ -1,0 +1,61 @@
+attempt,predicted,confidence,verdict,hint
+1,0MH,0.9758,captcha_wrong,验证码输入错误 请您重新输入!
+2,HTPM,0.9971,captcha_ok,用户不存在
+3,KA6C,0.9602,captcha_ok,用户不存在
+4,M4UT,0.9943,captcha_ok,用户不存在
+5,1JSL,0.9954,captcha_ok,用户不存在
+6,TJC1,0.8973,captcha_ok,用户不存在
+7,1K1B,0.9989,captcha_ok,用户不存在
+8,GC84,0.9995,captcha_ok,用户不存在
+9,EVA8,0.9945,captcha_ok,用户不存在
+10,7TQ1,0.9983,captcha_ok,用户不存在
+11,56VZ,0.9996,captcha_ok,用户不存在
+12,TUG1,0.9945,captcha_ok,用户不存在
+13,0P5P,0.9973,captcha_ok,用户不存在
+14,O5P4,0.9748,captcha_ok,用户不存在
+15,OV1U,0.9971,captcha_ok,用户不存在
+16,AKT,0.9961,captcha_wrong,验证码输入错误 请您重新输入!
+17,NJI,0.8577,captcha_wrong,验证码输入错误 请您重新输入!
+18,4KRA,0.9996,captcha_ok,用户不存在
+19,4UZL,0.9001,captcha_ok,用户不存在
+20,ZMP4,0.9994,captcha_ok,用户不存在
+21,3NLY,0.9988,captcha_ok,用户不存在
+22,B52T,0.9998,captcha_ok,用户不存在
+23,T7PL,0.9979,captcha_ok,用户不存在
+24,WJ2D,0.8111,captcha_wrong,验证码输入错误 请您重新输入!
+25,E4F5,0.9999,captcha_ok,用户不存在
+26,4Q9T,0.9994,captcha_ok,用户不存在
+27,MBJK,0.8879,captcha_wrong,验证码输入错误 请您重新输入!
+28,7DR1,0.9955,captcha_ok,用户不存在
+29,O2EJ,0.9839,captcha_ok,用户不存在
+30,1P59,0.9988,captcha_ok,用户不存在
+31,NPAL,0.9994,captcha_ok,用户不存在
+32,WQ5G,0.9777,captcha_ok,用户不存在
+33,5Y6N,0.9996,captcha_ok,用户不存在
+34,4EW1,0.9172,captcha_ok,用户不存在
+35,8UQ2,0.9948,captcha_ok,用户不存在
+36,I1F5,0.9968,captcha_ok,用户不存在
+37,3YDR,0.9692,captcha_ok,用户不存在
+38,IOCR,0.8891,captcha_ok,用户不存在
+39,4Q8J,0.9913,captcha_ok,用户不存在
+40,E0TL,0.9936,captcha_ok,用户不存在
+41,SW1L,0.9257,captcha_ok,用户不存在
+42,DSQU,0.9982,captcha_ok,用户不存在
+43,SSO1,0.9814,captcha_ok,用户不存在
+44,U182,0.991,captcha_ok,用户不存在
+45,JBYJX,0.818,captcha_wrong,验证码输入错误 请您重新输入!
+46,E8QW,0.9577,captcha_ok,用户不存在
+47,Z23E,0.9396,captcha_ok,用户不存在
+48,CP91,0.987,captcha_ok,用户不存在
+49,ANBX,0.9836,captcha_ok,用户不存在
+50,NVQD,0.9933,captcha_ok,用户不存在
+51,W6L2,0.9722,captcha_ok,用户不存在
+52,MWUE,0.9648,captcha_ok,用户不存在
+53,4XX8,0.9992,captcha_ok,用户不存在
+54,FDX6,0.9989,captcha_ok,用户不存在
+55,SB6J,0.9902,captcha_ok,用户不存在
+56,7SMD,0.9576,captcha_ok,用户不存在
+57,O114,0.9271,captcha_ok,用户不存在
+58,HYP6,0.9482,captcha_ok,用户不存在
+59,Y7C5,0.9982,captcha_ok,用户不存在
+60,98O9,0.9532,captcha_ok,用户不存在

@@ -1,0 +1,61 @@
+attempt,predicted,confidence,verdict,hint
+1,Q9HD,0.9964,captcha_ok,用户不存在
+2,CMGV,0.9728,captcha_ok,用户不存在
+3,HA53,0.9912,captcha_ok,用户不存在
+4,VC8T,0.9977,captcha_ok,用户不存在
+5,AV4X,0.9454,captcha_ok,用户不存在
+6,SIBH,0.9925,captcha_ok,用户不存在
+7,05CE,0.9964,captcha_ok,用户不存在
+8,R6H2,0.9997,captcha_ok,用户不存在
+9,R44U,0.9993,captcha_ok,用户不存在
+10,Q11I,0.9829,captcha_ok,用户不存在
+11,XX576,0.9076,captcha_wrong,验证码输入错误 请您重新输入!
+12,OBQ4M,0.8045,captcha_wrong,验证码输入错误 请您重新输入!
+13,9AV8,0.9992,captcha_ok,用户不存在
+14,VP0P,0.9923,captcha_ok,用户不存在
+15,AA2,0.9749,captcha_wrong,验证码输入错误 请您重新输入!
+16,38YN,0.9922,captcha_ok,用户不存在
+17,MZ2I,0.9759,captcha_ok,用户不存在
+18,IR2D,0.8944,captcha_ok,用户不存在
+19,YDG7,0.9981,captcha_ok,用户不存在
+20,MHWL,0.9493,captcha_ok,用户不存在
+21,3MX1,0.9654,captcha_ok,用户不存在
+22,Y4GK,0.9985,captcha_ok,用户不存在
+23,XJZ2,0.9984,captcha_ok,用户不存在
+24,JZPR,0.9973,captcha_ok,用户不存在
+25,46ZZ,0.9996,captcha_ok,用户不存在
+26,2XU3,0.999,captcha_ok,用户不存在
+27,AJXF,0.9989,captcha_ok,用户不存在
+28,C49M,0.9903,captcha_ok,用户不存在
+29,05MJ,0.6901,captcha_wrong,验证码输入错误 请您重新输入!
+30,93EV,0.9876,captcha_ok,用户不存在
+31,VZLB,0.9869,captcha_wrong,验证码输入错误 请您重新输入!
+32,B5MX,0.9306,captcha_ok,用户不存在
+33,OQJI,0.7699,captcha_ok,用户不存在
+34,0I1R,0.9598,captcha_ok,用户不存在
+35,9G3R,0.9995,captcha_ok,用户不存在
+36,143E,0.8969,captcha_wrong,验证码输入错误 请您重新输入!
+37,Q4N7,0.9833,captcha_ok,用户不存在
+38,A13W,0.9999,captcha_ok,用户不存在
+39,89PM,0.9993,captcha_ok,用户不存在
+40,Z7HT,0.9995,captcha_ok,用户不存在
+41,6TUF,0.9997,captcha_ok,用户不存在
+42,OXSV,0.9124,captcha_ok,用户不存在
+43,XPHQ,0.9942,captcha_ok,用户不存在
+44,NRSF,0.8797,captcha_ok,用户不存在
+45,OU1S,0.8934,captcha_ok,用户不存在
+46,R2SX,0.9999,captcha_ok,用户不存在
+47,RBLZ,0.9994,captcha_wrong,验证码输入错误 请您重新输入!
+48,KKIU,0.9849,captcha_ok,用户不存在
+49,10JL,0.972,captcha_ok,用户不存在
+50,C76G,0.9986,captcha_ok,用户不存在
+51,V0QG,0.9584,captcha_ok,用户不存在
+52,EYFS,0.9984,captcha_ok,用户不存在
+53,40MJ,0.9298,captcha_ok,用户不存在
+54,XZY8,0.9941,captcha_ok,用户不存在
+55,X0B9,0.995,captcha_ok,用户不存在
+56,LEP8,0.9979,captcha_ok,用户不存在
+57,Q616,0.9898,captcha_ok,用户不存在
+58,ARR7,0.9994,captcha_ok,用户不存在
+59,86J2,0.9709,captcha_ok,用户不存在
+60,374F,0.9995,captcha_ok,用户不存在

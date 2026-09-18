@@ -1,0 +1,61 @@
+attempt,predicted,confidence,verdict,hint
+1,L4Y8,0.9963,captcha_ok,用户不存在
+2,NDMO,0.9942,captcha_ok,用户不存在
+3,XWXN,0.8921,captcha_ok,用户不存在
+4,0AME,0.8932,captcha_wrong,验证码输入错误 请您重新输入!
+5,Z5FB,0.9999,captcha_ok,用户不存在
+6,HWQ5,0.7886,captcha_wrong,验证码输入错误 请您重新输入!
+7,AEXW,0.9999,captcha_ok,用户不存在
+8,Q8WV,0.997,captcha_ok,用户不存在
+9,3R9K,0.9876,captcha_ok,用户不存在
+10,MSDQ,0.9227,captcha_ok,用户不存在
+11,VTOV,0.9915,captcha_ok,用户不存在
+12,RB72,0.9999,captcha_ok,用户不存在
+13,JTYV,0.9484,captcha_ok,用户不存在
+14,B1TS,0.8836,captcha_ok,用户不存在
+15,M25S,0.9906,captcha_ok,用户不存在
+16,GZAI,0.9971,captcha_ok,用户不存在
+17,4IAO,0.9253,captcha_wrong,验证码输入错误 请您重新输入!
+18,0D93,0.9936,captcha_ok,用户不存在
+19,UUKH,0.9995,captcha_ok,用户不存在
+20,G132,0.9984,captcha_ok,用户不存在
+21,Z936,0.9999,captcha_ok,用户不存在
+22,3ZR7,0.9999,captcha_ok,用户不存在
+23,V3L7,0.9992,captcha_ok,用户不存在
+24,X6AA,0.999,captcha_ok,用户不存在
+25,9B10,0.8343,captcha_wrong,验证码输入错误 请您重新输入!
+26,9LOI,0.8147,captcha_ok,用户不存在
+27,5E19,0.9824,captcha_ok,用户不存在
+28,0J9C,0.9997,captcha_ok,用户不存在
+29,AM3U,0.9972,captcha_ok,用户不存在
+30,UKXW,0.8549,captcha_ok,用户不存在
+31,KRPA,0.9999,captcha_ok,用户不存在
+32,15BK,0.9967,captcha_wrong,验证码输入错误 请您重新输入!
+33,GV18,0.9994,captcha_ok,用户不存在
+34,LC11,0.9991,captcha_ok,用户不存在
+35,RL6H,0.9999,captcha_ok,用户不存在
+36,URU2,0.7962,captcha_wrong,验证码输入错误 请您重新输入!
+37,TMQZC,0.8549,captcha_wrong,验证码输入错误 请您重新输入!
+38,V0BL,0.9972,captcha_wrong,验证码输入错误 请您重新输入!
+39,4X2G,0.9996,captcha_ok,用户不存在
+40,VXQ0,0.9364,captcha_ok,用户不存在
+41,VST6,0.9999,captcha_ok,用户不存在
+42,HI40,0.8865,captcha_ok,用户不存在
+43,D2RB,0.9581,captcha_ok,用户不存在
+44,RJJT,0.9965,captcha_ok,用户不存在
+45,MC9E,0.9136,captcha_ok,用户不存在
+46,3HYH,0.9995,captcha_ok,用户不存在
+47,BYC9,0.9987,captcha_ok,用户不存在
+48,9CUN,0.9997,captcha_ok,用户不存在
+49,IH8S,0.8917,captcha_wrong,验证码输入错误 请您重新输入!
+50,B3EQ,0.982,captcha_ok,用户不存在
+51,Y84R,0.9993,captcha_ok,用户不存在
+52,3GE1,0.9968,captcha_ok,用户不存在
+53,SZWT,0.9404,captcha_ok,用户不存在
+54,VBTK,0.8492,captcha_ok,用户不存在
+55,ZWGB,0.9263,captcha_ok,用户不存在
+56,ORA0,0.996,captcha_ok,用户不存在
+57,1HZM,0.9997,captcha_ok,用户不存在
+58,0XUO,0.9869,captcha_ok,用户不存在
+59,AM6K,0.9594,captcha_ok,用户不存在
+60,3679,0.9992,captcha_ok,用户不存在
