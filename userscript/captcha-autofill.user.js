@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         验证码自动识别填充（通用 CRNN）
 // @namespace    https://github.com/Conastin/VerificationCode
-// @version      0.1.2
+// @version      0.1.3
 // @description  通用验证码识别：自动发现验证码与输入框，本地 CRNN 模型推理（无需服务器），低置信自动刷新重试。PoC 版。
 // @author       Conastin
 // @match        *://*/*
@@ -28,9 +28,9 @@
   // ------------------------------------------------------------ 常量
   const MODEL_VERSION = "v11-fp32-3.0.0";
   const MODEL_URLS = [
-    "https://fastly.jsdelivr.net/gh/Conastin/captcha-autofill-userscript@master/model.onnx",
-    "https://cdn.jsdelivr.net/gh/Conastin/captcha-autofill-userscript@master/model.onnx",
-    "https://raw.githubusercontent.com/Conastin/captcha-autofill-userscript/main/model.onnx",
+    "https://fastly.jsdelivr.net/gh/Conastin/VerificationCode@v3.0.0/browser/extension/model.onnx",
+    "https://cdn.jsdelivr.net/gh/Conastin/VerificationCode@v3.0.0/browser/extension/model.onnx",
+    "https://raw.githubusercontent.com/Conastin/VerificationCode/v3.0.0/browser/extension/model.onnx",
   ];
   const ORT_WASM_PATHS = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/";
   const CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
