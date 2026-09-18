@@ -2,13 +2,13 @@
 
 # 🎯 验证码识别器
 
-**60×20 四字符验证码识别模型 · 完整工具链 · 浏览器自动填充扩展**
+**通用验证码识别模型（CRNN+CTC，任意尺寸验证码）· 完整工具链 · 浏览器自动填充扩展**
 
 > 🔬 训练 ｜ 🧪 评估 ｜ 🔧 微调 ｜ 📦 ONNX 导出 ｜ 🧩 浏览器扩展
 >
 > 仅用于 **已授权测试环境** 的自动填充集成
 
-[![Version](https://img.shields.io/badge/version-2.6.0-2f6b0f?style=flat-square)](https://github.com/Conastin/VerificationCode)
+[![Version](https://img.shields.io/badge/version-3.0.0-2f6b0f?style=flat-square)](https://github.com/Conastin/VerificationCode)
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?style=flat-square)]()
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.12-EE4C2C?style=flat-square)]()
 [![ONNX](https://img.shields.io/badge/ONNX-1.17-005C97?style=flat-square)]()
