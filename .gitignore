@@ -19,3 +19,6 @@ checkpoints/*
 .env.local
 LOCAL_SECRETS.md
 tmp/pubrepo/
+
+# E2E 浏览器 profile
+tmp/portal/edge_profile/

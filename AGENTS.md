@@ -40,7 +40,7 @@
 
 - 提交信息：`type(scope): 中文描述`，type ∈ feat/fix/docs/ci/chore（release notes 按此前缀分组，写规范些）
 - 测试：`.venv/Scripts/python -m pytest -q`（Python 侧）；扩展改动用 playwright + 系统 Edge（channel="msedge"）端到端验证，headless 加载扩展：`--disable-extensions-except=<dir> --load-extension=<dir>`，扩展 id 从 service worker URL 解析
-- 内网站点（如 oas.example.com.com 自签名证书）：playwright context 需 `ignore_https_errors=True`；curl 需 `--ssl-no-revoke`
+- 内网站点（如 oas.example.com 自签名证书）：playwright context 需 `ignore_https_errors=True`；curl 需 `--ssl-no-revoke`
 - 数据分发：`checkpoints/best.pt`、`data/real_test_independent`、`data/real_human` 随仓库分发；真实采集样本（`real_all`/`train31`/`raw` 等）本地保留（.gitignore 白名单规则，父目录忽略后无法再包含子项，用 `data/*` + `!` 否定）
 - 发布类操作（commit/push/tag/release 创建）需用户明确要求后执行
 
