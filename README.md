@@ -2,9 +2,9 @@
 
 # 🎯 验证码识别器
 
-**通用验证码识别模型（CRNN+CTC，任意尺寸验证码）· 双端分发（扩展 + 用户脚本）· 完整工具链**
+**通用验证码识别模型（CRNN+CTC，任意尺寸验证码）· 用户脚本（脚本猫/Tampermonkey）· 完整工具链**
 
-> 🔬 训练 ｜ 🧪 评估 ｜ 🔄 数据飞轮 ｜ 📦 ONNX 导出 ｜ 🧩 浏览器扩展 ｜ 🐱 用户脚本
+> 🔬 训练 ｜ 🧪 评估 ｜ 🔄 数据飞轮 ｜ 📦 ONNX 导出 ｜ 🐱 用户脚本
 >
 > 仅用于 **已授权测试环境** 的自动填充集成
 
@@ -12,7 +12,6 @@
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?style=flat-square)]()
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.12-EE4C2C?style=flat-square)]()
 [![ONNX](https://img.shields.io/badge/ONNX-1.17-005C97?style=flat-square)]()
-[![Chrome](https://img.shields.io/badge/Chrome-MV3-blue?style=flat-square)]()
 [![Userscript](https://img.shields.io/badge/ScriptCat%20%2F%20Tampermonkey-%E7%94%A8%E6%88%B7%E8%84%9A%E6%9C%AC-9e6b0f?style=flat-square)](#-用户脚本scriptcattampermonkey)
 [![Test](https://img.shields.io/badge/test-pytest-9e9e9e?style=flat-square)]()
 
@@ -28,7 +27,7 @@
 | 📊 | **服务器实测双站验证**：两个风格迥异的真实站点，单次识别 95~97%（含涂鸦干扰、彩色字符、含易混字符 0/O/I/L），自动重试后任务成功率 99.9%+ |
 | 🔁 | **服务器反馈数据飞轮**：登录接口的验证码校验结果即免费标注器——"通过"的预测直接归档为金标准，"拒绝"的进难例池人工标注；240 张人工标注起步，飞轮滚到 95%+ 全程仅需人工参与 <1 小时 |
 | 🎲 | **域随机合成**：40 字体/随机尺寸/变长 3-6/彩字/涂鸦线/形变/JPEG 伪影，纯合成数据即可冷启动（旧站零样本 24%→微调后 97%+） |
-| 🧩 | **双端分发**：MV3 浏览器扩展（功能全量：可视化点选配置+失败样本收集）与用户脚本（一键安装，ScriptCat/Tampermonkey 通用，自动发现验证码）共用同一识别核心 |
+| 🐱 | **用户脚本分发**：一键安装（脚本猫/Tampermonkey 通用），**自动发现**验证码图+输入框，模型经 jsDelivr CDN 随版本分发、本地缓存离线可用 |
 | 📦 | **ONNX 导出**：单文件 10.5MB 动态宽度，Python / JS 双端推理结果逐位一致 |
 
 ---
@@ -64,63 +63,34 @@ python -m venv .venv
 
 ---
 
-## 🧩 浏览器扩展（MV3）
+## 🐱 用户脚本（ScriptCat / Tampermonkey）
 
-`browser/extension/` 是 Manifest V3 扩展，内置通用 CRNN 模型（10.5MB，动态宽度），支持两种验证码形态，**统一可视化点选配置**：
-
-- 🖼️ **图片验证码**：`<img>` 元素，任意尺寸，识别在浏览器本地完成（onnxruntime-web WASM）
-- 🔤 **纯文字验证码**：DOM 明文渲染（如示例站点的 4 位数字验证码），直接读取文本填充，**不加载模型**
+`userscript/captcha-autofill.user.js`——推荐搭配 [脚本猫 ScriptCat](https://docs.scriptcat.org/)（国内更友好，商店可装、云同步，完全兼容 Tampermonkey 脚本）。
 
 ### 📦 安装
 
 | 方式 | 步骤 |
 |---|---|
-| 源码版 | `chrome://extensions` → 开发者模式 → 加载已解压的扩展程序 → 选择 `browser/extension` |
-| 发布版 | 从 [Releases](https://github.com/Conastin/VerificationCode/releases) 下载 `verification-code-extension-vX.Y.Z.zip`，解压后按源码版方式加载（zip 由 GitHub Actions 自动打包发布） |
+| 市场安装 | [脚本猫脚本市场](https://scriptcat.org/zh-CN/search) 搜索"验证码自动识别填充"（上架后可用） |
+| 粘贴安装 | 脚本猫 → 新建脚本 → 粘贴 [captcha-autofill.user.js](userscript/captcha-autofill.user.js) 全文保存 |
+| 链接安装 | 浏览器打开 `https://fastly.jsdelivr.net/gh/Conastin/VerificationCode@master/userscript/captcha-autofill.user.js` |
 
-### 🎮 使用（30 秒上手）
+### ✨ 功能
 
-**可视化配置（推荐，图片/纯文字通用）**：
+- **自动发现**：DOM 启发式检测验证码图 + 输入框（关键词/尺寸/邻近度配对），顶部横幅确认「启用 / 微调 / 忽略本站」；微调模式下两次点击重选图和框
+- **本地识别**：通用 CRNN 模型（10.5MB）经 jsDelivr CDN 随版本分发，首次自动下载（带进度），Cache API 按版本缓存后离线可用；三级容灾（缓存 → @resource → 多 CDN 直拉）
+- **自动填充**：置信度 ≥0.9 填入输入框；不足则点击刷新重试（最多 5 次）；用户手动输入不会被覆盖
+- **菜单**：手动识别当前页 / 清除本站配置
 
-1. 🖱️ 打开验证码页面，**页面任意位置右键** → 「配置本站验证码」（或点扩展图标 → 「页面内可视化配置」）
-2. 📍 页面顶部出现浮动配置条，点「验证码元素」→ 页面上**悬停高亮、点击选中**（选中 `IMG` 自动识别为图片验证码，其余为纯文字）
-3. ⌨️ 同样点选「输入框」；「更换验证码按钮」可选（失败时自动点击重试）
-4. 💾 点「保存配置」：选择器自动生成，**立即生效无需刷新**，验证码自动填充
+### 🔁 自动更新
 
-再次打开配置条会**回显已有配置**，已配置元素直接高亮标注，可随时重选。
+脚本头部声明 `@updateURL`/`@downloadURL`（jsDelivr @master）+ `@version`，管理器定时检查并提示升级；
+模型与脚本同版本号发布（tag 路径锁定），更新脚本时自动拉取对应版本模型。
 
-<details>
-<summary>🔧 手动配置（popup 高级选项）</summary>
+### 🔁 失败样本收集（数据闭环）——规划中
 
-扩展图标 → popup 填写选择器（图片/纯文字），可选文本正则（默认提取 3~8 位字母数字），点「测试选择器」可在页面高亮验证。
+识别失败自动收集导出能力正在从扩展形态移植（`GM_download`），当前 PoC 阶段可手动截图反馈。
 
-| 字段 | 选择器示例 |
-|---|---|
-| 文字选择器 | `p.captcha-text` |
-| 输入框选择器 | `#verify-input` |
-| 更换验证码按钮 | `button.captcha-refresh` |
-
-</details>
-
-### 📜 行为约定
-
-| 模式 | 行为 |
-|---|---|
-| 🖼️ 图片 | 置信度 <0.9 自动点击验证码刷新重试（最多 5 次，60 秒后重置）；手动刷新也会触发重新识别（MutationObserver 监听 `src`） |
-| 🔤 纯文字 | **只填充不提交**；页面出现"验证码不正确"类提示时，自动点击更换验证码并重新填充（最多 5 次） |
-| 🤝 通用 | 用户手动输入不会被覆盖；配置按 `location.origin` 持久化，每站只需配置一次 |
-
-### 🔁 失败样本收集（数据闭环）
-
-识别置信度不足（<0.9）或提交后提示"验证码不正确"时，扩展自动保存验证码图片、预测、置信度与失败原因（本地 IndexedDB，上限 2000 条，自动去重）。点扩展图标 → **导出 ZIP**：`*.jpg` + `capture_manifest.csv`（与 `capture_real.py` 同格式）+ `failed_meta.json`。
-
-浏览器端识别演示页：`python browser/server.py` 后访问 `http://127.0.0.1:8000/browser/`（含 JS 与 Python 基准一致性对比）。
-
----
-
-## 🐱 用户脚本（ScriptCat / Tampermonkey）
-
-`userscript/captcha-autofill.user.js`——同一识别核心的用户脚本形态，**一键安装、免开发者模式**，推荐搭配 [脚本猫 ScriptCat](https://docs.scriptcat.org/)（国内更友好，完全兼容 Tampermonkey 脚本）。
 
 ### 📦 安装
 
@@ -223,19 +193,16 @@ checkpoints/universal_crnn_ft_portal_v11.pt  # 🔒 通用模型 v11（扩展/�
 │   ├── portal_login_validate.py   # 登录接口真值验证
 │   ├── portal_autolabel.py        # 自动标注闭环
 │   └── live_label_server.py       # 实时人在环标注（localhost:8765）
-├── browser/                 # MV3 扩展 + 识别演示页
-│   ├── extension/
-│   │   ├── shared/recognizer.js  # 共享识别核心（变尺寸预处理 + CTC 解码）
-│   │   └── model.onnx       # 10.5MB 通用模型（动态宽度）
-│   └── shared/recognizer.js # 演示页引用同一份
-├── userscript/              # 用户脚本（ScriptCat/Tampermonkey）
+├── userscript/              # 用户脚本（ScriptCat/Tampermonkey）+ 通用模型 onnx
+│   └── captcha-autofill.user.js  # 自动发现 + CTC 识别 + 低置信重试
 ├── tmp/portal/              # 实验脚本（探针/采集/基准/标注工具生成器）
 ├── tests/                   # pytest
 ├── reports/                 # 19 轮服务器实测记录、预测对比
+├── DATASETS.md              # 数据集说明（来源/划分/标注可靠性分级）
 └── requirements.txt
 ```
 
-> ⚠️ `data/` 与 `checkpoints/` 仅公开可复现项；真实采集样本与 portal 数据集含内网数据**不随仓库分发**。目标站点信息一律使用环境变量（`.env.local`）注入，仓库内不含任何真实站点/账密。
+> 📂 **全部数据集已随仓库公开**（图片均为验证码字符图，无隐私；详见 [DATASETS.md](DATASETS.md)）。目标站点信息一律使用环境变量（`.env.local`）注入，仓库内不含任何真实站点/账密。
 
 ---
 

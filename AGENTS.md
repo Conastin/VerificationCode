@@ -2,12 +2,15 @@
 
 验证码识别器项目（60×20 四字符验证码模型 + 通用 CRNN 模型 + 工具链 + MV3 浏览器扩展）的工作约定与踩坑记录。
 
-## 发布流程（Release Extension workflow）
+## 发布流程（Release Userscript workflow）
 
-- 触发：推送 `v*` 标签（如 `git tag v2.6.0 && git push origin v2.6.0`），或 Actions 页手动 `workflow_dispatch`
-- 版本号取自 `browser/extension/manifest.json` 的 `version` 字段（不是 tag 名）；打 tag 前先确认 manifest 版本已更新
-- 产物：`verification-code-extension-v<version>.zip` + 分组 release notes（按 Conventional Commits 前缀：feat/fix/perf/refactor/test/docs/ci-chore/其他）
-- 扩展版本更新后记得同步 README 徽章（version-<x.y.z>）与使用说明
+- 分发形态：**单一用户脚本**（ScriptCat/Tampermonkey），MV3 扩展已于 2026-09-18 移除（无法上架商店、普通用户安装麻烦）
+- 触发：推送 `v*` 标签（如 `git tag v3.1.0 && git push origin v3.1.0`），或 Actions 页手动 `workflow_dispatch`
+- 版本号取自 `userscript/captcha-autofill.user.js` 的 `@version` 字段；打 tag 前同步更新脚本内 `MODEL_TAG`（模型 CDN 路径随 tag 锁定）与 README 徽章
+- 产物：`captcha-autofill-userscript-v<version>.zip`（脚本+模型离线包）+ 分组 release notes
+- 分发主渠道：jsDelivr CDN（@updateURL/@downloadURL 指向 @master，@version 递增即自动更新）+ 脚本猫脚本市场（scriptcat.org 登录提交，审核制）
+- 推送遇 TLS/网络问题见下文"本地 Windows TLS/网络"
+- 数据集已全量公开（DATASETS.md），.gitignore 白名单规则维护注意：data/* 父目录忽略 + ! 子项再包含
 
 ## CI 踩坑记录（已修复，勿再犯）
 
