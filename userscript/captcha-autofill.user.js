@@ -1,11 +1,16 @@
 // ==UserScript==
 // @name         验证码自动识别填充（通用 CRNN）
 // @namespace    https://github.com/Conastin/VerificationCode
-// @version      0.1.3
+// @version      0.2.0
 // @description  通用验证码识别：自动发现验证码与输入框，本地 CRNN 模型推理（无需服务器），低置信自动刷新重试。PoC 版。
 // @author       Conastin
 // @match        *://*/*
 // @run-at       document-idle
+// @homepageURL  https://github.com/Conastin/VerificationCode
+// @supportURL   https://github.com/Conastin/VerificationCode/issues
+// @license      MIT
+// @updateURL    https://fastly.jsdelivr.net/gh/Conastin/VerificationCode@master/userscript/captcha-autofill.user.js
+// @downloadURL  https://fastly.jsdelivr.net/gh/Conastin/VerificationCode@master/userscript/captcha-autofill.user.js
 // @connect      cdn.jsdelivr.net
 // @connect      raw.githubusercontent.com
 // @connect      github.com
@@ -26,11 +31,13 @@
 
 (() => {
   // ------------------------------------------------------------ 常量
-  const MODEL_VERSION = "v11-fp32-3.0.0";
+  // 模型与脚本同版本分发: 发新版时同步更新此 tag 与 @version
+  const MODEL_TAG = "v3.1.0";
+  const MODEL_VERSION = "v11-fp32-" + MODEL_TAG;
   const MODEL_URLS = [
-    "https://fastly.jsdelivr.net/gh/Conastin/VerificationCode@v3.0.0/browser/extension/model.onnx",
-    "https://cdn.jsdelivr.net/gh/Conastin/VerificationCode@v3.0.0/browser/extension/model.onnx",
-    "https://raw.githubusercontent.com/Conastin/VerificationCode/v3.0.0/browser/extension/model.onnx",
+    "https://fastly.jsdelivr.net/gh/Conastin/VerificationCode@" + MODEL_TAG + "/userscript/model.onnx",
+    "https://cdn.jsdelivr.net/gh/Conastin/VerificationCode@" + MODEL_TAG + "/userscript/model.onnx",
+    "https://raw.githubusercontent.com/Conastin/VerificationCode/" + MODEL_TAG + "/userscript/model.onnx",
   ];
   const ORT_WASM_PATHS = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/";
   const CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
