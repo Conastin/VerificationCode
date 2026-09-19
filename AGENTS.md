@@ -18,6 +18,11 @@
 
 - 块标量内所有行必须保持与首行相同的基缩进（当前文件 10 空格），**顶格行会提前结束块标量**，GitHub 直接判定 workflow 无效（0 秒 failure run，日志 "This run likely failed because of a workflow file issue"）
 - 多行字符串（如 `NOTES="..."`）内容行、闭合引号行都要带基缩进；赋值后可用 `sed 's/^ \{10\}//'` 去除
+- **复发教训（2026-09-19）**：通过 Bash heredoc 写 workflow 时，传输层会把 `
+` 折叠成真实换行 → printf 格式串/多行拼接再次顶格。结论：workflow 文件一律用 Write 工具直接写（不经 bash 传输），多行 shell 拼接一律 `printf '%s
+
+%s
+%s'`；job 级加 `if: startsWith(github.ref, 'refs/tags/')` 守卫防 master push 误触发
 - 修改 workflow 后先本地验证：PyYAML `yaml.safe_load` 解析 + 提取 run 块模拟执行（注意 Windows 工作区 CRLF 需先替换，`$GITHUB_OUTPUT` 本地需手动设置）
 
 ### 2. actions/checkout 浅克隆
