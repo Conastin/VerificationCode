@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         验证码自动识别填充（通用 CRNN）
 // @namespace    https://github.com/Conastin/VerificationCode
-// @version      0.2.7
+// @version      0.2.9
 // @description  通用验证码识别：自动发现验证码与输入框，图片走本地 CRNN 推理、纯文字 DOM 直读（无需服务器），低置信自动刷新重试。
 // @author       Conastin
 // @match        *://*/*
@@ -24,6 +24,7 @@
 // @grant        GM_getValue
 // @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
+// @grant        GM_info
 // @noframes
 // ==/UserScript==
 
@@ -57,6 +58,8 @@
     chipTimer: null,
     running: false, // 识别循环进行中(含低置信刷新重试), 屏蔽刷新监听的递归触发
     srcObserver: null,
+    watching: false,
+    lastSrc: null,
   };
 
   // ------------------------------------------------------------ 工具
@@ -108,6 +111,7 @@
     return new Promise((resolve, reject) => {
       GM_xmlhttpRequest({
         method: "GET", url, responseType: "arraybuffer",
+        timeout: 120000,
         headers: { "Cache-Control": "no-cache" },
         onprogress: (e) => {
           if (onProgress && e.lengthComputable) onProgress(e.loaded, e.total);
@@ -467,32 +471,57 @@
     return runImageFill(force);
   }
 
-  // 监听验证码变化: 图片模式监听 src 刷新(手动点验证码换图即重新识别),
-  // 以及整个 img 节点被替换的场景(childList); 识别进行中自动屏蔽
+  // 监听验证码变化: MutationObserver(src/childList) + 轮询比对 src 双通道,
+  // 任一通道检测到刷新即强制重识别; 识别进行中自动屏蔽
   function watchCaptchaChanges() {
-    if (state.srcObserver || state.config?.mode !== "image") return;
+    if (state.watching || state.config?.mode !== "image") return;
+    state.watching = true;
+    console.log("[captcha-us] v" + (GM_info?.script?.version ?? "?") + " 已开始监听验证码刷新");
+
+    const onRefresh = () => {
+      console.log("[captcha-us] 检测到验证码刷新，重新识别");
+      runAutoFill(true);
+    };
+
+    // 通道1: MutationObserver (src 变化 / img 节点替换)
     state.srcObserver = new MutationObserver((muts) => {
       if (state.running) return;
       const sel = state.config?.imgSelector;
       if (!sel) return;
+      const img = document.querySelector(sel);
       const hit = muts.some((m) => {
         const t = m.target;
         return t.nodeType === 1 && (t.matches?.(sel) || t.querySelector?.(sel));
       });
       if (hit) {
-        console.debug("[captcha-us] 检测到验证码刷新，重新识别");
-        runAutoFill(true);
+        if (img) state.lastSrc = img.src;
+        onRefresh();
       }
     });
     state.srcObserver.observe(document.body, {
       attributes: true, attributeFilter: ["src"], subtree: true,
       childList: true,
     });
+
+    // 通道2: 轮询比对 src (兜底, 与 observer 相互独立)
+    state.lastSrc = document.querySelector(state.config.imgSelector)?.src || "";
+    setInterval(() => {
+      if (state.running) return;
+      const img = document.querySelector(state.config?.imgSelector);
+      if (!img) return;
+      if (state.lastSrc && img.src !== state.lastSrc) {
+        state.lastSrc = img.src;
+        onRefresh();
+      } else {
+        state.lastSrc = img.src;
+      }
+    }, 1500);
   }
 
   // ------------------------------------------------------------ 入口
   async function main() {
     if (window.top !== window.self) return; // @noframes 兜底
+    console.log("[captcha-us] v" + (GM_info?.script?.version ?? "?") + " 已加载:", location.href);
     injectStyle();
 
     GM_registerMenuCommand("手动识别当前页", () => {
