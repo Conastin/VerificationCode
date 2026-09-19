@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         验证码自动识别填充（通用 CRNN）
 // @namespace    https://github.com/Conastin/VerificationCode
-// @version      0.2.3
+// @version      0.2.4
 // @description  通用验证码识别：自动发现验证码与输入框，图片走本地 CRNN 推理、纯文字 DOM 直读（无需服务器），低置信自动刷新重试。
 // @author       Conastin
 // @match        *://*/*
@@ -17,6 +17,7 @@
 // @connect      objects.githubusercontent.com
 // @connect      fastly.jsdelivr.net
 // @require      https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js
+// @resource     model https://fastly.jsdelivr.net/gh/Conastin/VerificationCode@v3.1.0/userscript/model.onnx
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getResourceURL
 // @grant        GM_setValue
@@ -40,6 +41,7 @@
     "https://raw.githubusercontent.com/Conastin/VerificationCode/" + MODEL_TAG + "/userscript/model.onnx",
   ];
   const ORT_WASM_PATHS = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/";
+  const MODEL_SIZE_MB = 10.5;
   const CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const BLANK = 36;
   const IMG_H = 48;
@@ -116,7 +118,18 @@
   }
 
   async function loadModelBytes() {
-    // 1) Cache API 本地缓存（按版本, 只在 https 页面可用）
+    // 1) @resource —— 管理器级缓存, 安装脚本时下载一次、所有网站共享
+    try {
+      const url = GM_getResourceURL("model", true);
+      if (url && (url.startsWith("blob:") || url.startsWith("data:"))) {
+        const resp = await fetch(url);
+        if (resp.ok) {
+          const bytes = await resp.arrayBuffer();
+          if (bytes.byteLength > 1e6) return { bytes, cached: true };
+        }
+      }
+    } catch (e) { /* 管理器差异, 走下一级 */ }
+    // 2) Cache API 本地缓存（按域名隔离: 命中说明本站曾直拉过）
     if ("caches" in window && window.isSecureContext) {
       try {
         const cache = await caches.open("captcha-model");
@@ -124,20 +137,15 @@
         if (hit) return { bytes: await hit.arrayBuffer(), cached: true };
       } catch (e) { /* 页面 CSP 等原因, 走下一级 */ }
     }
-    // 2) @resource（管理器预下载）
-    try {
-      const url = GM_getResourceURL("model", true);
-      if (url && url.startsWith("blob:")) {
-        const resp = await fetch(url);
-        if (resp.ok) return { bytes: await resp.arrayBuffer(), cached: true };
-      }
-    } catch (e) { /* 管理器差异, 走直拉 */ }
-    // 3) 多 CDN 直拉
+    // 3) 多 CDN 直拉（模型大小已知, 进度不依赖 lengthComputable）
     let lastErr = null;
     for (const url of MODEL_URLS) {
       try {
-        const bytes = await fetchWithGM(url, (loaded, total) =>
-          setChip(`模型下载 ${((loaded / total) * 100) | 0}%（首次约10MB，之后本地缓存）`, "load"));
+        setChip(`模型下载 0.0 / ${MODEL_SIZE_MB}MB（管理器级共享缓存建立后其他网站秒加载）`, "load");
+        const bytes = await fetchWithGM(url, (loaded, total) => {
+          const mb = Math.min(loaded / 1e6, MODEL_SIZE_MB);
+          setChip(`模型下载 ${mb.toFixed(1)} / ${MODEL_SIZE_MB}MB`, "load");
+        });
         if ("caches" in window && window.isSecureContext) {
           try {
             const cache = await caches.open("captcha-model");
@@ -153,6 +161,7 @@
   async function initModel() {
     if (state.session) return;
     state.status = "loading";
+    setChip("模型加载中…", "load");
     try {
       const { bytes } = await loadModelBytes();
       ort.env.wasm.wasmPaths = ORT_WASM_PATHS;
@@ -162,6 +171,7 @@
         graphOptimizationLevel: "all",
       });
       state.status = "ready";
+      hideChip();
     } catch (e) {
       state.status = "error";
       setChip("模型加载失败: " + e.message, "err");
