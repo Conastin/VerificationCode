@@ -1,11 +1,11 @@
 # 打包用户脚本（含模型）并发布 GitHub Release
 #
 # 触发方式：
-#   1. 手动：仓库 Actions 页 → "Release Userscript" → Run workflow
+#   1. 手动：仓库 Actions 页 → "Release Userscript" → Run workflow（需选 v* tag ref）
 #   2. 自动：推送 v* 标签（如 git tag v3.1.0 && git push origin v3.1.0）
 #
 # 分发主渠道是 jsDelivr CDN（@<tag> 路径）与脚本猫脚本市场；
-# Release zip 是离线备份（脚本 + 模型，导入管理器或手动放置缓存）。
+# Release zip 是离线备份（脚本 + 模型）。
 
 name: Release Userscript
 
@@ -20,6 +20,8 @@ permissions:
 
 jobs:
   build-release:
+    # 仅 tag 推送时构建（防 master push 误触发）
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -42,6 +44,7 @@ jobs:
           cp userscript/captcha-autofill.user.js package/userscript/
           cp userscript/model.onnx package/userscript/
           cp README.md package/
+          cp DATASETS.md package/ 2>/dev/null || true
           cd package
           zip -r "../captcha-autofill-userscript-v${{ steps.version.outputs.version }}.zip" .
 
@@ -49,6 +52,7 @@ jobs:
         id: notes
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           PREV_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || true)
           if [ -n "$PREV_TAG" ]; then
@@ -58,39 +62,30 @@ jobs:
           fi
           # 按 Conventional Commits 前缀分组（空组不输出）
           NOTES="更新内容"
-          declare -A GROUPS=(
-            ["feat"]="### 🚀 新功能" ["fix"]="### 🐛 修复" ["perf"]="### ⚡ 性能"
-            ["refactor"]="### ♻️ 重构" ["test"]="### 🧪 测试" ["docs"]="### 📝 文档"
-          )
-          ORDER=("feat" "fix" "perf" "refactor" "test" "docs" "ci" "chore" "其他")
-          for key in "${ORDER[@]}"; do
-            if [ "$key" = "其他" ]; then
-              LINES=$(echo "$LOG" | grep -vE "^\S+ (feat|fix|perf|refactor|test|docs|ci|chore)(\(|:)" || true)
-              HEADER="### 🔧 构建/维护"
-            else
-              LINES=$(echo "$LOG" | grep -E "^\S+ $key(\(|:)" || true)
-              HEADER="${GROUPS[$key]}"
-            fi
+          for key in feat fix perf refactor test docs; do
+            LINES=$(echo "$LOG" | grep -E "^[0-9a-f]+ $key(\(|:)" || true)
             if [ -n "$LINES" ]; then
-              NOTES="$NOTES
-
-$HEADER
-$LINES"
+              case "$key" in
+                feat) HEADER="### 🚀 新功能";;
+                fix) HEADER="### 🐛 修复";;
+                perf) HEADER="### ⚡ 性能";;
+                refactor) HEADER="### ♻️ 重构";;
+                test) HEADER="### 🧪 测试";;
+                docs) HEADER="### 📝 文档";;
+              esac
+              NOTES=$(printf '%s\n\n%s\n%s' "$NOTES" "$HEADER" "$LINES")
             fi
           done
-          NOTES="$NOTES
-
-## 安装说明
-
-1. 下载本 Release 资产 captcha-autofill-userscript-v${{ steps.version.outputs.version }}.zip
-2. 方式一（推荐）：脚本猫/Tampermonkey → 新建脚本 → 粘贴 userscript/captcha-autofill.user.js 内容
-3. 方式二：解压 zip，把 model.onnx 放入管理器脚本资源后导入脚本
-
-> 模型也可由脚本自动从 jsDelivr CDN 下载（首次约 10MB，之后本地缓存）。"
-          # 多行字符串写入 GITHUB_OUTPUT（去除 10 空格基缩进）
+          # 其余（ci/chore 等）归入构建/维护
+          OTHER=$(echo "$LOG" | grep -vE "^[0-9a-f]+ (feat|fix|perf|refactor|test|docs)(\(|:)" || true)
+          if [ -n "$OTHER" ]; then
+            NOTES=$(printf '%s\n\n%s\n%s' "$NOTES" "### 🔧 构建/维护" "$OTHER")
+          fi
+          INSTALL=$(printf '## 安装说明\n\n1. 下载本 Release 资产 captcha-autofill-userscript-v%s.zip\n2. 方式一（推荐）：脚本猫/Tampermonkey → 新建脚本 → 粘贴 userscript/captcha-autofill.user.js 全文保存\n3. 方式二：解压 zip 备用（模型本地化）\n\n> 模型也可由脚本自动从 jsDelivr CDN 下载（首次约 10MB，之后本地缓存）。' "$VERSION")
+          NOTES=$(printf '%s\n\n%s' "$NOTES" "$INSTALL")
           {
             echo "notes<<EOF_NOTES"
-            echo "$NOTES" | sed 's/^ \{10\}//'
+            echo "$NOTES"
             echo "EOF_NOTES"
           } >> "$GITHUB_OUTPUT"
 
