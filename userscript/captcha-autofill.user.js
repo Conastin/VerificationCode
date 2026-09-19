@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         验证码自动识别填充（通用 CRNN）
 // @namespace    https://github.com/Conastin/VerificationCode
-// @version      0.2.6
+// @version      0.2.7
 // @description  通用验证码识别：自动发现验证码与输入框，图片走本地 CRNN 推理、纯文字 DOM 直读（无需服务器），低置信自动刷新重试。
 // @author       Conastin
 // @match        *://*/*
@@ -467,8 +467,8 @@
     return runImageFill(force);
   }
 
-  // 监听验证码变化: 图片模式监听 src 刷新(手动点验证码换图即重新识别);
-  // 识别进行中 self-trigger 自动屏蔽
+  // 监听验证码变化: 图片模式监听 src 刷新(手动点验证码换图即重新识别),
+  // 以及整个 img 节点被替换的场景(childList); 识别进行中自动屏蔽
   function watchCaptchaChanges() {
     if (state.srcObserver || state.config?.mode !== "image") return;
     state.srcObserver = new MutationObserver((muts) => {
@@ -479,10 +479,14 @@
         const t = m.target;
         return t.nodeType === 1 && (t.matches?.(sel) || t.querySelector?.(sel));
       });
-      if (hit) runAutoFill(true);
+      if (hit) {
+        console.debug("[captcha-us] 检测到验证码刷新，重新识别");
+        runAutoFill(true);
+      }
     });
     state.srcObserver.observe(document.body, {
       attributes: true, attributeFilter: ["src"], subtree: true,
+      childList: true,
     });
   }
 
