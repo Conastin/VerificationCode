@@ -43,6 +43,7 @@ jobs:
           mkdir -p package/userscript
           cp userscript/captcha-autofill.user.js package/userscript/
           cp userscript/model.onnx package/userscript/
+          cp userscript/captcha-autofill.user.js captcha-autofill.user.js
           cp README.md package/
           cp DATASETS.md package/ 2>/dev/null || true
           cd package
@@ -100,5 +101,6 @@ jobs:
           fi
           gh release create "$TAG" \
             "captcha-autofill-userscript-v${VERSION}.zip" \
+            "captcha-autofill.user.js" \
             --title "验证码自动识别填充（用户脚本） v${VERSION}" \
             --notes "${{ steps.notes.outputs.notes }}"
