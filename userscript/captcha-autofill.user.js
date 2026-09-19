@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         验证码自动识别填充（通用 CRNN）
 // @namespace    https://github.com/Conastin/VerificationCode
-// @version      0.2.9
+// @version      0.3.1
 // @description  通用验证码识别：自动发现验证码与输入框，图片走本地 CRNN 推理、纯文字 DOM 直读（无需服务器），低置信自动刷新重试。
 // @author       Conastin
 // @match        *://*/*
@@ -58,6 +58,7 @@
     chipTimer: null,
     running: false, // 识别循环进行中(含低置信刷新重试), 屏蔽刷新监听的递归触发
     srcObserver: null,
+    textObserver: null,
     watching: false,
     lastSrc: null,
   };
@@ -466,9 +467,27 @@
 
   function runAutoFill(force) {
     if (!state.config || state.running) return;
-    if (state.config.mode === "text") return runTextFill(force);
+    console.log("[captcha-us] 运行填充: mode=" + state.config.mode + (force ? " (强制)" : ""));
+    if (state.config.mode === "text") {
+      watchTextChanges();
+      return runTextFill(force);
+    }
     watchCaptchaChanges();
     return runImageFill(force);
+  }
+
+  // 文字模式: 监听验证码文本变化 → 强制重读
+  function watchTextChanges() {
+    if (state.textObserver || state.config?.mode !== "text") return;
+    const sel = state.config.textSelector;
+    const target = document.querySelector(sel);
+    if (!target) return;
+    state.textObserver = new MutationObserver(() => {
+      if (state.running) return;
+      console.log("[captcha-us] 检测到文字验证码变化，重新读取");
+      runAutoFill(true);
+    });
+    state.textObserver.observe(target, { childList: true, characterData: true, subtree: true });
   }
 
   // 监听验证码变化: MutationObserver(src/childList) + 轮询比对 src 双通道,
@@ -476,7 +495,7 @@
   function watchCaptchaChanges() {
     if (state.watching || state.config?.mode !== "image") return;
     state.watching = true;
-    console.log("[captcha-us] v" + (GM_info?.script?.version ?? "?") + " 已开始监听验证码刷新");
+    console.log("[captcha-us] v" + (typeof GM_info !== "undefined" ? GM_info.script.version : "?") + " 已开始监听验证码刷新");
 
     const onRefresh = () => {
       console.log("[captcha-us] 检测到验证码刷新，重新识别");
@@ -521,11 +540,12 @@
   // ------------------------------------------------------------ 入口
   async function main() {
     if (window.top !== window.self) return; // @noframes 兜底
-    console.log("[captcha-us] v" + (GM_info?.script?.version ?? "?") + " 已加载:", location.href);
+    console.log("[captcha-us] v" + (typeof GM_info !== "undefined" ? GM_info.script.version : "?") + " 已加载:", location.href);
     injectStyle();
 
     GM_registerMenuCommand("手动识别当前页", () => {
       state.config = state.config || GM_getValue("cfg:" + location.origin);
+      if (state.config && !state.config.mode) state.config.mode = "image";
       if (!state.config) {
         const cand = discover();
         if (cand) return showDiscoveryBanner(cand);
@@ -540,14 +560,25 @@
     });
 
     const ignored = await GM_getValue("ignore:" + location.origin);
-    if (ignored) return; // 静默，菜单可重置
+    if (ignored) {
+      console.log("[captcha-us] 本站已被忽略（菜单「清除本站配置」可重置）");
+      return;
+    }
 
     state.config = await GM_getValue("cfg:" + location.origin);
     if (state.config) {
+      // v0.1.x 旧版配置无 mode 字段, 默认视为图片模式并升级持久化
+      if (!state.config.mode) {
+        state.config.mode = "image";
+        await GM_setValue("cfg:" + location.origin, state.config);
+        console.log("[captcha-us] 旧版配置已升级为 image 模式");
+      }
+      console.log("[captcha-us] 使用本站配置:", JSON.stringify(state.config));
       runAutoFill();
       return;
     }
-    // 无配置: 延迟自动发现（等页面渲染稳定）；未发现则静默
+    console.log("[captcha-us] 本站暂无配置，自动发现中…");
+    // 延迟自动发现（等页面渲染稳定）；未发现则静默等待交互重试
     await sleep(1500);
     const cand = discover();
     if (cand) {
