@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         验证码自动识别填充（通用 CRNN）
 // @namespace    https://github.com/Conastin/VerificationCode
-// @version      0.2.0
-// @description  通用验证码识别：自动发现验证码与输入框，本地 CRNN 模型推理（无需服务器），低置信自动刷新重试。PoC 版。
+// @version      0.2.1
+// @description  通用验证码识别：自动发现验证码与输入框，图片走本地 CRNN 推理、纯文字 DOM 直读（无需服务器），低置信自动刷新重试。
 // @author       Conastin
 // @match        *://*/*
 // @run-at       document-idle
@@ -45,12 +45,14 @@
   const IMG_H = 48;
   const CONF_THRESHOLD = 0.9;
   const MAX_ATTEMPTS = 5;
+  const DEFAULT_TEXT_PATTERN = /[A-Za-z0-9]{3,8}/;
 
   const state = {
     session: null,
     status: "idle", // idle | loading | ready | error
-    config: null,   // {imgSelector, inputSelector, refreshSelector}
+    config: null,   // {mode:"image"|"text", imgSelector?, textSelector?, inputSelector, textPattern?, refreshSelector?}
     chip: null,
+    chipTimer: null,
   };
 
   // ------------------------------------------------------------ 工具
@@ -76,16 +78,31 @@
     return path.join(">");
   }
 
+  // 角标: 按需显示 —— ok/info 4s、err 8s 自动隐藏; load/busy 常驻直到下一条或隐藏
   function setChip(text, kind) {
-    if (!state.chip) return;
+    if (!state.chip) {
+      state.chip = document.createElement("div");
+      state.chip.className = "cap-chip";
+      state.chip.style.display = "none";
+      document.body.appendChild(state.chip);
+    }
+    clearTimeout(state.chipTimer);
     state.chip.textContent = text;
     state.chip.dataset.kind = kind || "info";
+    state.chip.style.display = "";
+    const ttl = kind === "err" ? 8000 : (kind === "ok" || kind === "info") ? 4000 : 0;
+    if (ttl) state.chipTimer = setTimeout(() => { state.chip.style.display = "none"; }, ttl);
+  }
+
+  function hideChip() {
+    clearTimeout(state.chipTimer);
+    if (state.chip) state.chip.style.display = "none";
   }
 
   // ------------------------------------------------------------ 模型加载（三级容灾）
   async function fetchWithGM(url, onProgress) {
     return new Promise((resolve, reject) => {
-      const req = GM_xmlhttpRequest({
+      GM_xmlhttpRequest({
         method: "GET", url, responseType: "arraybuffer",
         headers: { "Cache-Control": "no-cache" },
         onprogress: (e) => {
@@ -95,7 +112,6 @@
         onerror: () => reject(new Error("network: " + url)),
         ontimeout: () => reject(new Error("timeout: " + url)),
       });
-      if (req && req.abort) { /* keep handle */ }
     });
   }
 
@@ -137,7 +153,6 @@
   async function initModel() {
     if (state.session) return;
     state.status = "loading";
-    setChip("模型加载中…", "load");
     try {
       const { bytes } = await loadModelBytes();
       ort.env.wasm.wasmPaths = ORT_WASM_PATHS;
@@ -147,7 +162,6 @@
         graphOptimizationLevel: "all",
       });
       state.status = "ready";
-      setChip("模型就绪", "ok");
     } catch (e) {
       state.status = "error";
       setChip("模型加载失败: " + e.message, "err");
@@ -197,7 +211,7 @@
     return { label: label.join(""), conf, perSlot: confs };
   }
 
-  // ------------------------------------------------------------ 自动发现
+  // ------------------------------------------------------------ 自动发现（图片验证码）
   const IMG_KEYWORDS = /(captcha|verify|rand|seccode|vcode|kaptcha|checkcode|imgcode|validcode|randcode|getrandcode)/i;
   const INPUT_KEYWORDS = /(验证码|校验码|captcha|verification|randcode|vcode|seccode)/i;
 
@@ -245,7 +259,7 @@
     return best;
   }
 
-  // ------------------------------------------------------------ UI（状态角标 + 发现横幅）
+  // ------------------------------------------------------------ UI（按需角标 + 发现横幅）
   function injectStyle() {
     const style = document.createElement("style");
     style.textContent = `
@@ -266,15 +280,6 @@
 .cap-note{color:#656d76;font-size:12px}
     `;
     document.head.appendChild(style);
-  }
-
-  function makeChip() {
-    const chip = document.createElement("div");
-    chip.className = "cap-chip";
-    chip.dataset.kind = "info";
-    chip.textContent = "验证码脚本已加载";
-    document.body.appendChild(chip);
-    state.chip = chip;
   }
 
   function showDiscoveryBanner(cand) {
@@ -303,6 +308,7 @@
     const dismiss = () => { banner.remove(); cand.img.classList.remove("cap-hl"); cand.input.classList.remove("cap-hl"); };
     btnYes.onclick = async () => {
       state.config = {
+        mode: "image",
         imgSelector: shortSelector(cand.img),
         inputSelector: shortSelector(cand.input),
         refreshSelector: shortSelector(cand.img),
@@ -311,7 +317,7 @@
       dismiss();
       runAutoFill();
     };
-    btnAdj.onclick = () => { dismiss(); startAdjust(cand); };
+    btnAdj.onclick = () => { dismiss(); startAdjust(); };
     btnNo.onclick = async () => {
       await GM_setValue("ignore:" + location.origin, true);
       dismiss();
@@ -320,12 +326,13 @@
     setTimeout(dismiss, 20000);
   }
 
-  function startAdjust(cand) {
+  // 微调: 第一步点击 IMG/CANVAS → 图片模式; 点其他元素 → 纯文字模式
+  function startAdjust() {
     const tip = document.createElement("div");
     tip.className = "cap-banner";
-    tip.innerHTML = "<b>微调</b>：点击验证码图片 → 再点击输入框";
+    tip.innerHTML = "<b>微调</b>：点击验证码（图片或文字元素）→ 再点击输入框";
     document.body.appendChild(tip);
-    const pick = (label, filter) => new Promise((resolve) => {
+    const pick = (filter) => new Promise((resolve) => {
       const handler = (e) => {
         if (!filter(e.target)) return;
         e.preventDefault(); e.stopPropagation();
@@ -335,20 +342,21 @@
       document.addEventListener("click", handler, true);
     });
     (async () => {
-      const img = await pick("图片", (t) => t.tagName === "IMG" || t.tagName === "CANVAS");
-      const input = await pick("输入框", (t) => (t.tagName === "INPUT" && t.type !== "password"));
-      state.config = {
-        imgSelector: shortSelector(img),
-        inputSelector: shortSelector(input),
-        refreshSelector: shortSelector(img),
-      };
+      const el = await pick((t) => t.nodeType === 1 && !t.closest(".cap-banner, .cap-chip"));
+      const isImage = el.tagName === "IMG" || el.tagName === "CANVAS";
+      const input = await pick((t) => (t.tagName === "INPUT" && t.type !== "password"));
+      state.config = isImage
+        ? { mode: "image", imgSelector: shortSelector(el), inputSelector: shortSelector(input),
+            refreshSelector: shortSelector(el) }
+        : { mode: "text", textSelector: shortSelector(el), inputSelector: shortSelector(input),
+            refreshSelector: shortSelector(el) };
       await GM_setValue("cfg:" + location.origin, state.config);
       tip.remove();
       runAutoFill();
     })();
   }
 
-  // ------------------------------------------------------------ 自动填充主循环
+  // ------------------------------------------------------------ 填充
   function waitImage(img, timeoutMs = 10000) {
     return new Promise((resolve) => {
       if (img.complete && img.naturalWidth > 0) return resolve(true);
@@ -359,8 +367,8 @@
     });
   }
 
-  function refreshCaptcha(img) {
-    try { img.click(); } catch (e) { /* ignore */ }
+  function refreshCaptcha(el) {
+    try { el.click(); } catch (e) { /* ignore */ }
   }
 
   function fillInput(input, value) {
@@ -371,15 +379,45 @@
     input.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
-  async function runAutoFill() {
-    if (!state.config) return;
+  function extractText(el) {
+    const raw = (el.value !== undefined && el.tagName === "INPUT") ? el.value
+      : (el.textContent || el.innerText || "");
+    const pattern = state.config.textPattern
+      ? new RegExp(state.config.textPattern)
+      : DEFAULT_TEXT_PATTERN;
+    const m = String(raw).match(pattern);
+    return m ? m[0] : String(raw).trim();
+  }
+
+  // 纯文字验证码: DOM 直读填充（无需模型），失败可点刷新重读
+  async function runTextFill() {
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      const el = document.querySelector(state.config.textSelector);
+      const input = document.querySelector(state.config.inputSelector);
+      if (!el || !input) return;
+      if (input.value && input.value.length >= 3) return; // 手动已填
+      const code = extractText(el);
+      if (code && code.length >= 3) {
+        fillInput(input, code);
+        setChip(`已填充 ${code}（文字直读）`, "ok");
+        return;
+      }
+      setChip(`文字直读失败（${attempt}/${MAX_ATTEMPTS}），刷新重试`, "load");
+      refreshCaptcha(el);
+      await sleep(1000);
+    }
+    setChip("多次读取失败，请手动输入", "err");
+  }
+
+  // 图片验证码: 本地 CRNN 识别 + 低置信刷新重试
+  async function runImageFill() {
     await initModel();
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const img = document.querySelector(state.config.imgSelector);
       const input = document.querySelector(state.config.inputSelector);
-      if (!img || !input) { setChip("等待页面元素…", "load"); return; }
+      if (!img || !input) return;
       // 用户已手动填写则不再覆盖
-      if (input.value && input.value.length >= 4) { setChip("已填充（手动）", "ok"); return; }
+      if (input.value && input.value.length >= 4) return;
       if (!(await waitImage(img))) continue;
       setChip(`识别中…（${attempt}/${MAX_ATTEMPTS}）`, "busy");
       let result;
@@ -387,7 +425,7 @@
       catch (e) { setChip("识别失败: " + e.message, "err"); return; }
       if (result.conf >= CONF_THRESHOLD && result.label.length === 4) {
         fillInput(input, result.label);
-        setChip(`已填充 ${result.label}（${result.conf.toFixed(2)}）`, "ok");
+        setChip(`已填充 ${result.label}（置信度 ${result.conf.toFixed(2)}）`, "ok");
         return;
       }
       setChip(`置信度不足 ${result.conf.toFixed(2)}，刷新重试`, "load");
@@ -397,39 +435,43 @@
     setChip("多次置信度不足，请手动输入", "err");
   }
 
+  function runAutoFill() {
+    if (!state.config) return;
+    return state.config.mode === "text" ? runTextFill() : runImageFill();
+  }
+
   // ------------------------------------------------------------ 入口
   async function main() {
     if (window.top !== window.self) return; // @noframes 兜底
     injectStyle();
-    makeChip();
 
     GM_registerMenuCommand("手动识别当前页", () => {
       state.config = state.config || GM_getValue("cfg:" + location.origin);
       if (!state.config) {
         const cand = discover();
         if (cand) return showDiscoveryBanner(cand);
-        return setChip("未检测到验证码", "err");
+        return setChip("未检测到验证码，可用「微调」手动指定", "info");
       }
       runAutoFill();
     });
+    GM_registerMenuCommand("微调本站配置", () => startAdjust());
     GM_registerMenuCommand("清除本站配置", async () => {
       await GM_deleteValue("cfg:" + location.origin);
       location.reload();
     });
 
     const ignored = await GM_getValue("ignore:" + location.origin);
-    if (ignored) { setChip("本站已忽略（菜单可重置）", "info"); return; }
+    if (ignored) return; // 静默，菜单可重置
 
     state.config = await GM_getValue("cfg:" + location.origin);
     if (state.config) {
       runAutoFill();
       return;
     }
-    // 无配置: 延迟自动发现（等页面渲染稳定）
+    // 无配置: 延迟自动发现（等页面渲染稳定）；未发现则静默
     await sleep(1500);
     const cand = discover();
     if (cand) showDiscoveryBanner(cand);
-    else setChip("未检测到验证码", "info");
   }
 
   main().catch((e) => console.error("[captcha-us]", e));
