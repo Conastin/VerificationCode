@@ -22,3 +22,16 @@ tmp/pubrepo/
 
 # E2E 浏览器 profile
 tmp/portal/edge_profile/
+
+# 数据集公开白名单（详见 DATASETS.md）
+!data/portal_label/
+!data/portal_dataset/
+!data/old_slot_labeled/
+!data/old_slot_labeled_2/
+!data/real_all/
+!checkpoints/universal_crnn_ft_portal_v11.pt
+
+# 数据集内部临时文件
+data/**/.DS_Store
+data/**/label_tool.html
+data/**/relabel_rejected_tool.html

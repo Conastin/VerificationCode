@@ -1,0 +1,7 @@
+{
+  "batch": "batch_20260918_021100",
+  "started": "2026-09-18T02:11:00",
+  "checkpoint": "checkpoints\\universal_crnn_ft_portal_v3.pt",
+  "attempts": 500,
+  "interval_s": 2.2
+}
