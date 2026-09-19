@@ -1,13 +1,17 @@
 // ==UserScript==
 // @name         验证码自动识别填充（通用 CRNN）
 // @namespace    https://github.com/Conastin/VerificationCode
-// @version      0.3.1
+// @version      0.3.2
 // @description  通用验证码识别：自动发现验证码与输入框，图片走本地 CRNN 推理、纯文字 DOM 直读（无需服务器），低置信自动刷新重试。
 // @author       Conastin
 // @match        *://*/*
 // @run-at       document-idle
+// @homepage     https://github.com/Conastin/VerificationCode
 // @homepageURL  https://github.com/Conastin/VerificationCode
 // @supportURL   https://github.com/Conastin/VerificationCode/issues
+// @tag          验证码
+// @tag          OCR
+// @tag          自动填充
 // @license      MIT
 // @updateURL    https://github.com/Conastin/VerificationCode/releases/latest/download/captcha-autofill.user.js
 // @downloadURL  https://github.com/Conastin/VerificationCode/releases/latest/download/captcha-autofill.user.js
