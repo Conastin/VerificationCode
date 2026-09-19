@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         验证码自动识别填充（通用 CRNN）
 // @namespace    https://github.com/Conastin/VerificationCode
-// @version      0.2.4
+// @version      0.2.5
 // @description  通用验证码识别：自动发现验证码与输入框，图片走本地 CRNN 推理、纯文字 DOM 直读（无需服务器），低置信自动刷新重试。
 // @author       Conastin
 // @match        *://*/*
@@ -55,6 +55,8 @@
     config: null,   // {mode:"image"|"text", imgSelector?, textSelector?, inputSelector, textPattern?, refreshSelector?}
     chip: null,
     chipTimer: null,
+    running: false, // 识别循环进行中(含低置信刷新重试), 屏蔽刷新监听的递归触发
+    srcObserver: null,
   };
 
   // ------------------------------------------------------------ 工具
@@ -400,12 +402,15 @@
   }
 
   // 纯文字验证码: DOM 直读填充（无需模型），失败可点刷新重读
-  async function runTextFill() {
+  // force=true 时覆盖已有输入（验证码内容已变化, 旧值必然失效）
+  async function runTextFill(force) {
+    state.running = true;
+    try {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const el = document.querySelector(state.config.textSelector);
       const input = document.querySelector(state.config.inputSelector);
       if (!el || !input) return;
-      if (input.value && input.value.length >= 3) return; // 手动已填
+      if (!force && input.value && input.value.length >= 3) return; // 手动已填
       const code = extractText(el);
       if (code && code.length >= 3) {
         fillInput(input, code);
@@ -417,10 +422,14 @@
       await sleep(1000);
     }
     setChip("多次读取失败，请手动输入", "err");
+    } finally { state.running = false; }
   }
 
   // 图片验证码: 本地 CRNN 识别 + 低置信刷新重试
-  async function runImageFill() {
+  // force=true 时覆盖已有输入（验证码图已刷新, 旧值必然失效）
+  async function runImageFill(force) {
+    state.running = true;
+    try {
     await initModel();
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const img = document.querySelector(state.config.imgSelector);
@@ -431,8 +440,8 @@
         if (cand) showDiscoveryBanner(cand);
         return;
       }
-      // 用户已手动填写则不再覆盖
-      if (input.value && input.value.length >= 4) return;
+      // 用户已手动填写则不再覆盖（刷新触发的 force 重识别除外）
+      if (!force && input.value && input.value.length >= 4) return;
       if (!(await waitImage(img))) continue;
       setChip(`识别中…（${attempt}/${MAX_ATTEMPTS}）`, "busy");
       let result;
@@ -448,11 +457,33 @@
       await sleep(1200);
     }
     setChip("多次置信度不足，请手动输入", "err");
+    } finally { state.running = false; }
   }
 
-  function runAutoFill() {
-    if (!state.config) return;
-    return state.config.mode === "text" ? runTextFill() : runImageFill();
+  function runAutoFill(force) {
+    if (!state.config || state.running) return;
+    if (state.config.mode === "text") return runTextFill(force);
+    watchCaptchaChanges();
+    return runImageFill(force);
+  }
+
+  // 监听验证码变化: 图片模式监听 src 刷新(手动点验证码换图即重新识别);
+  // 识别进行中 self-trigger 自动屏蔽
+  function watchCaptchaChanges() {
+    if (state.srcObserver || state.config?.mode !== "image") return;
+    state.srcObserver = new MutationObserver((muts) => {
+      if (state.running) return;
+      const sel = state.config?.imgSelector;
+      if (!sel) return;
+      const hit = muts.some((m) => {
+        const t = m.target;
+        return t.nodeType === 1 && (t.matches?.(sel) || t.querySelector?.(sel));
+      });
+      if (hit) runAutoFill(true);
+    });
+    state.srcObserver.observe(document.body, {
+      attributes: true, attributeFilter: ["src"], subtree: true,
+    });
   }
 
   // ------------------------------------------------------------ 入口
@@ -467,7 +498,7 @@
         if (cand) return showDiscoveryBanner(cand);
         return setChip("未检测到验证码，可用「微调」手动指定", "info");
       }
-      runAutoFill();
+      runAutoFill(true);
     });
     GM_registerMenuCommand("微调本站配置", () => startAdjust());
     GM_registerMenuCommand("清除本站配置", async () => {
