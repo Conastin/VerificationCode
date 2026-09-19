@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         验证码自动识别填充（通用 CRNN）
 // @namespace    https://github.com/Conastin/VerificationCode
-// @version      0.2.2
+// @version      0.2.3
 // @description  通用验证码识别：自动发现验证码与输入框，图片走本地 CRNN 推理、纯文字 DOM 直读（无需服务器），低置信自动刷新重试。
 // @author       Conastin
 // @match        *://*/*
@@ -415,7 +415,12 @@
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const img = document.querySelector(state.config.imgSelector);
       const input = document.querySelector(state.config.inputSelector);
-      if (!img || !input) return;
+      if (!img || !input) {
+        // 配置的选择器失效（站点改版）: 回退到自动发现重新配置
+        const cand = discover();
+        if (cand) showDiscoveryBanner(cand);
+        return;
+      }
       // 用户已手动填写则不再覆盖
       if (input.value && input.value.length >= 4) return;
       if (!(await waitImage(img))) continue;
@@ -471,7 +476,42 @@
     // 无配置: 延迟自动发现（等页面渲染稳定）；未发现则静默
     await sleep(1500);
     const cand = discover();
-    if (cand) showDiscoveryBanner(cand);
+    if (cand) {
+      showDiscoveryBanner(cand);
+      return;
+    }
+    watchForCaptcha(); // portal 类"交互后才显示验证码"的站点: 交互/DOM 变化时重试
+  }
+
+  // 无配置时的重发现监听: 输入焦点/点击/DOM 变化触发（防抖）; 发现或保存配置后自动停止
+  function watchForCaptcha() {
+    let active = true;
+    let timer = null;
+    const attempt = () => {
+      if (!active) return;
+      if (state.config) { stop(); return; }
+      if (document.querySelector(".cap-banner")) return; // 横幅已打开
+      const cand = discover();
+      if (cand) { stop(); showDiscoveryBanner(cand); }
+    };
+    const debounced = () => {
+      clearTimeout(timer);
+      timer = setTimeout(attempt, 600);
+    };
+    const stop = () => {
+      active = false;
+      clearTimeout(timer);
+      document.removeEventListener("focusin", debounced, true);
+      document.removeEventListener("mousedown", debounced, true);
+      observer.disconnect();
+    };
+    const observer = new MutationObserver(debounced);
+    observer.observe(document.body, { childList: true, subtree: true,
+                                      attributes: true,
+                                      attributeFilter: ["style", "class", "src"] });
+    document.addEventListener("focusin", debounced, true);
+    document.addEventListener("mousedown", debounced, true);
+    setTimeout(stop, 10 * 60 * 1000); // 10 分钟后放弃, 避免常驻开销
   }
 
   main().catch((e) => console.error("[captcha-us]", e));
